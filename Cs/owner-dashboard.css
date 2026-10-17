@@ -1,0 +1,497 @@
+
+/* ==========================================
+   CHILIMBA SMART SAVE
+   Group Owner Dashboard Styles
+========================================== */
+
+:root {
+  --owner-green: #123b2a;
+  --owner-light-green: #256b4a;
+  --owner-background: #f7faf8;
+  --owner-text: #17231d;
+  --owner-muted: #68756d;
+  --owner-border: #dce7df;
+  --owner-white: #ffffff;
+  --owner-radius: 14px;
+}
+
+.owner-dashboard-page {
+  margin: 0;
+  background: var(--owner-background);
+  color: var(--owner-text);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.owner-dashboard-page * {
+  box-sizing: border-box;
+}
+
+.owner-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  min-height: 66px;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--owner-green);
+  color: white;
+}
+
+.owner-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: white;
+  text-decoration: none;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.owner-logo {
+  font-size: 26px;
+}
+
+.owner-menu-toggle {
+  display: none;
+  border: 1px solid #ffffff55;
+  background: transparent;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 21px;
+  cursor: pointer;
+}
+
+.owner-layout {
+  display: flex;
+  min-height: calc(100vh - 66px);
+}
+
+.owner-sidebar {
+  width: 255px;
+  flex-shrink: 0;
+  padding: 20px 14px;
+  background: var(--owner-white);
+  border-right: 1px solid var(--owner-border);
+}
+
+.owner-profile {
+  padding: 12px 8px 22px;
+  text-align: center;
+  border-bottom: 1px solid var(--owner-border);
+  overflow-wrap: anywhere;
+}
+
+.owner-avatar {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 12px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--owner-green);
+  color: white;
+  font-size: 25px;
+  font-weight: 700;
+}
+
+.owner-profile h2 {
+  margin: 8px 0;
+  font-size: 17px;
+}
+
+.owner-profile p {
+  margin: 5px 0 12px;
+  color: var(--owner-muted);
+  font-size: 13px;
+}
+
+.owner-role {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: #e5f3e9;
+  color: var(--owner-green);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.owner-nav {
+  display: grid;
+  gap: 5px;
+  margin-top: 18px;
+}
+
+.owner-nav-link {
+  display: block;
+  width: 100%;
+  padding: 12px 11px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--owner-text);
+  text-decoration: none;
+  text-align: left;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.owner-nav-link:hover,
+.owner-nav-link.active {
+  background: #e7f2eb;
+  color: var(--owner-green);
+}
+
+.owner-logout {
+  margin-top: 10px;
+  color: #a52a2a;
+}
+
+.owner-main {
+  flex: 1;
+  min-width: 0;
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 28px;
+}
+
+.owner-welcome {
+  padding: 25px;
+  margin-bottom: 22px;
+  border-radius: var(--owner-radius);
+  background: var(--owner-green);
+  color: white;
+}
+
+.owner-eyebrow {
+  margin: 0 0 10px;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.owner-welcome h1 {
+  margin: 0 0 10px;
+  font-size: clamp(24px, 3vw, 34px);
+}
+
+.owner-welcome p:last-child {
+  margin-bottom: 0;
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+.owner-message {
+  padding: 13px 15px;
+  margin: 0 0 20px;
+  border: 1px solid #e5c98c;
+  border-radius: 9px;
+  background: #fff7df;
+  color: #674b0b;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.owner-panel {
+  margin-bottom: 22px;
+  padding: 22px;
+  border: 1px solid var(--owner-border);
+  border-radius: var(--owner-radius);
+  background: var(--owner-white);
+  box-shadow: 0 3px 12px #123b2a08;
+}
+
+.owner-panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 18px;
+}
+
+.owner-panel-heading h2 {
+  margin: 0 0 6px;
+  font-size: 19px;
+}
+
+.owner-panel-heading p {
+  margin: 0;
+  color: var(--owner-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.owner-panel label {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.owner-panel select {
+  width: 100%;
+  max-width: 500px;
+  min-height: 44px;
+  padding: 10px;
+  border: 1px solid #cbd9ce;
+  border-radius: 8px;
+  background: white;
+  color: var(--owner-text);
+  font-size: 14px;
+}
+
+.selected-group-name {
+  margin: 20px 0 12px;
+  color: var(--owner-green);
+  font-size: 22px;
+  overflow-wrap: anywhere;
+}
+
+.owner-panel > p {
+  line-height: 1.6;
+}
+
+.muted-text {
+  color: var(--owner-muted);
+  font-size: 12px;
+}
+
+.owner-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.owner-summary-card {
+  min-width: 0;
+  padding: 21px;
+  border: 1px solid var(--owner-border);
+  border-radius: var(--owner-radius);
+  background: white;
+}
+
+.summary-icon {
+  font-size: 25px;
+}
+
+.owner-summary-card p {
+  margin: 12px 0 8px;
+  color: var(--owner-muted);
+  font-size: 13px;
+}
+
+.owner-summary-card h2 {
+  margin: 0 0 10px;
+  color: var(--owner-green);
+  font-size: clamp(19px, 2.5vw, 27px);
+  overflow-wrap: anywhere;
+}
+
+.owner-summary-card small {
+  display: block;
+  color: var(--owner-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.leadership-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.leadership-card {
+  padding: 17px 12px;
+  border: 1px solid var(--owner-border);
+  border-radius: 10px;
+  background: #f9fcfa;
+  overflow-wrap: anywhere;
+}
+
+.leadership-card > span {
+  font-size: 23px;
+}
+
+.leadership-card h3 {
+  margin: 12px 0 7px;
+  font-size: 14px;
+}
+
+.leadership-card p {
+  margin: 0;
+  color: var(--owner-muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.owner-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 13px;
+}
+
+.owner-action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  padding: 17px;
+  border: 1px solid var(--owner-border);
+  border-radius: 11px;
+  color: var(--owner-text);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.owner-action:hover {
+  border-color: var(--owner-light-green);
+  background: #f0f8f2;
+}
+
+.owner-action > span {
+  font-size: 25px;
+}
+
+.owner-action strong {
+  font-size: 14px;
+}
+
+.owner-action small {
+  color: var(--owner-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.owner-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.owner-table {
+  width: 100%;
+  min-width: 540px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.owner-table th,
+.owner-table td {
+  padding: 13px 11px;
+  border-bottom: 1px solid var(--owner-border);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.owner-table th {
+  background: #f2f7f3;
+  color: var(--owner-green);
+  font-weight: 700;
+}
+
+.owner-footer {
+  padding: 22px 8px;
+  color: var(--owner-muted);
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+button:disabled,
+select:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+@media (min-width: 1000px) {
+  .owner-summary-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 850px) {
+  .owner-menu-toggle {
+    display: block;
+  }
+
+  .owner-layout {
+    display: block;
+  }
+
+  .owner-sidebar {
+    position: fixed;
+    top: 66px;
+    bottom: 0;
+    left: 0;
+    z-index: 90;
+    width: 270px;
+    max-width: 85vw;
+    overflow-y: auto;
+    transform: translateX(-105%);
+    transition: transform 0.25s ease;
+    box-shadow: 4px 0 18px #00000012;
+  }
+
+  .owner-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .owner-main {
+    padding: 18px;
+  }
+
+  .owner-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .owner-header {
+    padding: 12px 15px;
+  }
+
+  .owner-brand {
+    font-size: 14px;
+  }
+
+  .owner-main {
+    padding: 13px;
+  }
+
+  .owner-welcome,
+  .owner-panel {
+    padding: 17px;
+  }
+
+  .owner-summary-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .owner-summary-card {
+    padding: 14px;
+  }
+
+  .owner-summary-card h2 {
+    font-size: 18px;
+  }
+
+  .owner-actions {
+    grid-template-columns: 1fr 1fr;
+    gap: 9px;
+  }
+
+  .owner-action {
+    padding: 12px;
+  }
+
+  .leadership-grid {
+    grid-template-columns: 1fr;
+  }
+}
