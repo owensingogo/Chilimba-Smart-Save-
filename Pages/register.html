@@ -1,0 +1,186 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#123b2a">
+  <meta name="description" content="Create your Chilimba Smart Save account.">
+  <title>Create Account | Chilimba Smart Save</title>
+
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/auth.css">
+</head>
+
+<body class="auth-page">
+
+  <header class="auth-header">
+    <a class="auth-brand" href="../index.html">
+      <span class="auth-brand-icon">🌱</span>
+      <span>Chilimba Smart Save</span>
+    </a>
+    <a class="auth-home-link" href="login.html">Sign in</a>
+  </header>
+
+  <main class="auth-main">
+    <section class="auth-card">
+
+      <div class="auth-heading">
+        <div class="auth-symbol">🤝</div>
+        <p class="auth-eyebrow">Start saving together</p>
+        <h1>Create your account</h1>
+        <p>Join Chilimba Smart Save and organise your group savings.</p>
+      </div>
+
+      <form id="register-form" class="login-form">
+
+        <div>
+          <label for="full-name">Full name</label>
+          <input
+            class="login-email"
+            type="text"
+            id="full-name"
+            name="fullName"
+            placeholder="Enter your full name"
+            autocomplete="name"
+            minlength="2"
+            maxlength="100"
+            required
+          >
+        </div>
+
+        <div>
+          <label for="email">Email address</label>
+          <input
+            class="login-email"
+            type="email"
+            id="email"
+            name="email"
+            placeholder="Enter your email address"
+            autocomplete="email"
+            required
+          >
+        </div>
+
+        <div>
+          <label for="phone">Mobile number</label>
+          <input
+            class="login-email"
+            type="tel"
+            id="phone"
+            name="phone"
+            placeholder="e.g. 0971234567"
+            autocomplete="tel"
+            maxlength="20"
+            required
+          >
+        </div>
+
+        <div>
+          <label for="location">Town / City</label>
+          <select
+            class="login-email"
+            id="location"
+            name="location"
+            required
+          >
+            <option value="">Select your town or city</option>
+            <option value="Kitwe">Kitwe</option>
+            <option value="Lusaka">Lusaka</option>
+            <option value="Ndola">Ndola</option>
+            <option value="Livingstone">Livingstone</option>
+            <option value="Kabwe">Kabwe</option>
+            <option value="Chingola">Chingola</option>
+            <option value="Mufulira">Mufulira</option>
+            <option value="Luanshya">Luanshya</option>
+            <option value="Kalulushi">Kalulushi</option>
+            <option value="Solwezi">Solwezi</option>
+            <option value="Chipata">Chipata</option>
+            <option value="Kasama">Kasama</option>
+            <option value="Mansa">Mansa</option>
+            <option value="Other">Other town in Zambia</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="password">Create password</label>
+          <input
+            class="login-password"
+            type="password"
+            id="password"
+            name="password"
+            placeholder="At least 8 characters"
+            autocomplete="new-password"
+            minlength="8"
+            required
+          >
+        </div>
+
+        <div>
+          <label for="confirm-password">Confirm password</label>
+          <input
+            class="login-password"
+            type="password"
+            id="confirm-password"
+            name="confirmPassword"
+            placeholder="Enter your password again"
+            autocomplete="new-password"
+            minlength="8"
+            required
+          >
+        </div>
+
+        <label class="remember-option">
+          <input
+            class="remember-me"
+            type="checkbox"
+            id="agree-terms"
+            required
+          >
+          I agree to the platform's terms and conditions.
+        </label>
+
+        <p
+          id="register-message"
+          class="auth-message"
+          role="status"
+          aria-live="polite"
+          hidden
+        ></p>
+
+        <button
+          type="submit"
+          id="register-button"
+          class="login-submit"
+        >
+          Create account
+        </button>
+
+      </form>
+
+      <div class="auth-divider">Already registered?</div>
+
+      <a class="auth-secondary-button" href="login.html">
+        Sign in to your account
+      </a>
+
+      <div class="auth-security-note">
+        <span>🛡️</span>
+        <span>
+          <strong>Your account matters.</strong>
+          Keep your password private and use your correct details.
+        </span>
+      </div>
+
+    </section>
+  </main>
+
+  <footer class="auth-footer">
+    Chilimba Smart Save<br>
+    Learn to save. Save together. Grow together.
+  </footer>
+
+  <script type="module" src="../js/register.js"></script>
+
+</body>
+</html>
