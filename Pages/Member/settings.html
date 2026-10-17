@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#123b2a">
+  <title>Account Settings | Chilimba Smart Save</title>
+
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="../../css/dashboard.css">
+
+  <style>
+    .settings-content {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .settings-card {
+      background: #fff;
+      border: 1px solid #e7ede8;
+      border-radius: 14px;
+      padding: 22px;
+      margin: 18px 0;
+      box-shadow: 0 3px 12px rgba(18, 59, 42, 0.05);
+    }
+
+    .settings-card h2 {
+      color: #123b2a;
+      margin-top: 0;
+    }
+
+    .settings-note {
+      color: #66736a;
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .settings-form {
+      display: grid;
+      gap: 16px;
+    }
+
+    .settings-form label {
+      display: block;
+      color: #263b2f;
+      font-weight: 600;
+      margin-bottom: 7px;
+    }
+
+    .settings-form input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px;
+      border: 1px solid #cfdad1;
+      border-radius: 8px;
+      font-size: 15px;
+      background: #fff;
+      color: #24352a;
+    }
+
+    .settings-form input:focus {
+      outline: 2px solid #8bb99a;
+      border-color: #123b2a;
+    }
+
+    .settings-button {
+      width: 100%;
+      padding: 13px 16px;
+      border: none;
+      border-radius: 8px;
+      background: #123b2a;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .settings-button:hover {
+      background: #20553c;
+    }
+
+    .settings-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .settings-message {
+      font-size: 14px;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+
+    .back-link {
+      display: inline-block;
+      color: #123b2a;
+      font-weight: 600;
+      text-decoration: none;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 600px) {
+      .settings-content {
+        padding: 14px;
+      }
+
+      .settings-card {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="dashboard-layout">
+    <aside class="dashboard-sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <h2>Chilimba Smart Save</h2>
+        <p>Learn to save. Save together. Grow together.</p>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="contributions.html">My Contributions</a>
+        <a href="groups.html">My Groups</a>
+        <a href="transactions.html">Transactions</a>
+        <a href="settings.html" aria-current="page">Settings</a>
+      </nav>
+
+      <button type="button" id="logout-button">Log Out</button>
+    </aside>
+
+    <main class="dashboard-main">
+      <header class="dashboard-topbar">
+        <button type="button" id="menu-toggle" aria-label="Open navigation">
+          ☰
+        </button>
+        <h1>Account Settings</h1>
+      </header>
+
+      <section class="settings-content">
+        <a class="back-link" href="dashboard.html">← Back to Dashboard</a>
+
+        <section class="settings-card">
+          <h2>Personal Information</h2>
+          <p class="settings-note">
+            View the information associated with your Chilimba Smart Save account.
+          </p>
+
+          <form class="settings-form" id="profile-form">
+            <div>
+              <label for="full-name">Full name</label>
+              <input id="full-name" type="text" autocomplete="name" required>
+            </div>
+
+            <div>
+              <label for="email">Email address</label>
+              <input id="email" type="email" autocomplete="email" readonly>
+            </div>
+
+            <div>
+              <label for="phone">Phone number</label>
+              <input id="phone" type="tel" autocomplete="tel" required>
+            </div>
+
+            <div>
+              <label for="location">Town or city</label>
+              <input id="location" type="text" autocomplete="address-level2" required>
+            </div>
+
+            <button class="settings-button" id="save-profile-button" type="submit">
+              Save Changes
+            </button>
+
+            <p class="settings-message" id="profile-message" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+
+        <section class="settings-card">
+          <h2>Password and Security</h2>
+          <p class="settings-note">
+            Request a password-reset email to change your account password securely.
+          </p>
+
+          <button class="settings-button" id="reset-password-button" type="button">
+            Send Password Reset Email
+          </button>
+
+          <p class="settings-message" id="security-message" role="status" aria-live="polite"></p>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script type="module">
+    import { auth, db } from "../../js/firebase.js";
+
+    import {
+      onAuthStateChanged,
+      signOut,
+      sendPasswordResetEmail
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+    import {
+      doc,
+      getDoc,
+      updateDoc
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+    const sidebar = document.getElementById("sidebar");
+    const menuToggle = document.getElementById("menu-toggle");
+    const logoutButton = document.getElementById("logout-button");
+
+    const profileForm = document.getElementById("profile-form");
+    const fullNameInput = document.getElementById("full-name");
+    const emailInput = document.getElementById("email");
+    const phoneInput = document.getElementById("phone");
+    const locationInput = document.getElementById("location");
+
+    const saveProfileButton = document.getElementById("save-profile-button");
+    const profileMessage = document.getElementById("profile-message");
+
+    const resetPasswordButton = document.getElementById("reset-password-button");
+    const securityMessage = document.getElementById("security-message");
+
+    let currentUser = null;
+    let profileReference = null;
+
+    menuToggle.addEventListener("click", () => {
+      sidebar.classList.toggle("open");
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.replace("../login.html");
+        return;
+      }
+
+      currentUser = user;
+      profileReference = doc(db, "users", user.uid);
+
+      emailInput.value = user.email || "";
+
+      try {
+        const profileSnapshot = await getDoc(profileReference);
+
+        if (!profileSnapshot.exists()) {
+          profileMessage.textContent =
+            "Your account profile could not be found. Please contact support.";
+          saveProfileButton.disabled = true;
+          return;
+        }
+
+        const profile = profileSnapshot.data();
+
+        if (profile.role !== "member" || profile.active === false) {
+          await signOut(auth);
+          window.location.replace("../login.html");
+          return;
+        }
+
+        fullNameInput.value = profile.fullName || user.displayName || "";
+        phoneInput.value = profile.phone || "";
+        locationInput.value = profile.location || "";
+
+      } catch (error) {
+        profileMessage.textContent =
+          "Unable to load your profile. Check your internet connection and try again.";
+      }
+    });
+
+    profileForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      if (!currentUser || !profileReference) {
+        profileMessage.textContent = "Please sign in again.";
+        return;
+      }
+
+      const fullName = fullNameInput.value.trim();
+      const phone = phoneInput.value.trim();
+      const location = locationInput.value.trim();
+
+      if (!fullName || !phone || !location) {
+        profileMessage.textContent = "Complete all required fields.";
+        return;
+      }
+
+      saveProfileButton.disabled = true;
+      profileMessage.textContent = "Saving your changes...";
+
+      try {
+        await updateDoc(profileReference, {
+          fullName,
+          phone,
+          location
+        });
+
+        profileMessage.textContent = "Your profile has been updated successfully.";
+      } catch (error) {
+        console.error("Profile update failed:", error);
+        profileMessage.textContent =
+          "Your changes could not be saved. Please try again.";
+      } finally {
+        saveProfileButton.disabled = false;
+      }
+    });
+
+    resetPasswordButton.addEventListener("click", async () => {
+      if (!currentUser || !currentUser.email) {
+        securityMessage.textContent =
+          "Your account has no email address for password recovery.";
+        return;
+      }
+
+      resetPasswordButton.disabled = true;
+      securityMessage.textContent = "Sending password-reset email...";
+
+      try {
+        await sendPasswordResetEmail(auth, currentUser.email);
+        securityMessage.textContent =
+          "Password-reset email sent. Check your inbox and spam folder.";
+      } catch (error) {
+        console.error("Password reset request failed:", error);
+
+        if (error.code === "auth/too-many-requests") {
+          securityMessage.textContent =
+            "Too many attempts. Please wait before trying again.";
+        } else {
+          securityMessage.textContent =
+            "Unable to send the reset email. Please try again later.";
+        }
+      } finally {
+        resetPasswordButton.disabled = false;
+      }
+    });
+
+    logoutButton.addEventListener("click", async () => {
+      logoutButton.disabled = true;
+
+      try {
+        await signOut(auth);
+        window.location.replace("../login.html");
+      } catch (error) {
+        profileMessage.textContent = "Unable to log out. Please try again.";
+        logoutButton.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

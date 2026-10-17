@@ -1,0 +1,235 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#123b2a">
+  <meta name="description" content="Chilimba Smart Save member dashboard.">
+  <title>Member Dashboard | Chilimba Smart Save</title>
+
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="../../css/dashboard.css">
+</head>
+<body class="dashboard-page">
+
+  <header class="dashboard-header">
+    <a class="dashboard-brand" href="dashboard.html">
+      <span class="dashboard-brand-icon">🌱</span>
+      <span>Chilimba Smart Save</span>
+    </a>
+
+    <button id="menu-toggle" class="menu-toggle"
+      type="button" aria-label="Open navigation" aria-expanded="false">
+      ☰
+    </button>
+  </header>
+
+  <div class="dashboard-layout">
+    <aside id="sidebar" class="dashboard-sidebar">
+      <div class="member-summary">
+        <div class="member-avatar" id="member-avatar">M</div>
+        <h2 id="member-name">Loading member...</h2>
+        <p id="member-location">Loading location...</p>
+        <span class="member-status">Member account</span>
+      </div>
+
+      <nav class="dashboard-nav">
+        <a class="nav-link active" href="dashboard.html">🏠 Overview</a>
+        <a class="nav-link" href="contributions.html">💰 Contributions</a>
+        <a class="nav-link" href="groups.html">👥 My Chilimba Groups</a>
+        <a class="nav-link" href="join-group.html">➕ Join a Group</a>
+        <a class="nav-link" href="transactions.html">📋 Transactions</a>
+        <a class="nav-link" href="loans.html">🤝 Loans & Borrowing</a>
+        <a class="nav-link" href="loan-rules.html">📜 Loan Rules & Fees</a>
+        <a class="nav-link" href="polls.html">🗳️ Polls & Voting</a>
+        <a class="nav-link" href="announcements.html">📢 Announcements</a>
+        <a class="nav-link" href="meeting-minutes.html">📝 Meeting Minutes</a>
+        <a class="nav-link" href="group-directory.html">👨‍👩‍👧 Group Directory</a>
+        <a class="nav-link" href="discrepancies.html">🧾 Discrepancy Reports</a>
+        <a class="nav-link" href="subscription.html">💳 Group Subscription</a>
+        <a class="nav-link" href="settings.html">⚙️ Account Settings</a>
+
+        <button id="logout-button" class="nav-link logout-link"
+          type="button">
+          🚪 Sign Out
+        </button>
+      </nav>
+    </aside>
+
+    <main class="dashboard-main">
+      <section class="dashboard-welcome">
+        <p class="dashboard-eyebrow">MEMBER DASHBOARD</p>
+        <h1>Welcome, <span id="welcome-name">Member</span>!</h1>
+        <p>
+          Track your personal savings, check your group's savings,
+          and stay connected with your Chilimba groups.
+        </p>
+      </section>
+
+      <p id="dashboard-message" role="status"
+        aria-live="polite" hidden></p>
+
+      <section class="dashboard-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>My Savings & Group Balance</h2>
+            <p>Your personal savings and shared group contributions are shown separately.</p>
+          </div>
+        </div>
+
+        <label for="group-selector">Choose a Chilimba group</label>
+        <select id="group-selector">
+          <option value="">Loading your groups...</option>
+        </select>
+
+        <div class="dashboard-cards">
+          <article class="summary-card">
+            <div class="summary-icon">💵</div>
+            <p>My Personal Savings</p>
+            <h2 id="personal-savings">Loading...</h2>
+            <span>Your confirmed contributions in the selected group</span>
+          </article>
+
+          <article class="summary-card">
+            <div class="summary-icon">👥</div>
+            <p>Group Shared Savings</p>
+            <h2 id="group-savings">Loading...</h2>
+            <span id="group-savings-note">Confirmed contributions from group members</span>
+          </article>
+        </div>
+
+        <p><strong>Group subscription:</strong>
+          <span id="group-subscription-status">Select a group</span>
+        </p>
+        <p id="group-subscription-dates"></p>
+      </section>
+
+      <section class="dashboard-cards">
+        <article class="summary-card">
+          <div class="summary-icon">👥</div>
+          <p>My Groups</p>
+          <h2 id="total-groups">0</h2>
+          <span>Groups you belong to</span>
+        </article>
+
+        <article class="summary-card">
+          <div class="summary-icon">📋</div>
+          <p>Transactions</p>
+          <h2 id="total-transactions">Unavailable</h2>
+          <span>Recorded transaction history</span>
+        </article>
+      </section>
+
+      <section class="dashboard-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Quick Actions</h2>
+            <p>Choose a feature to continue.</p>
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          <a href="contributions.html" class="action-card">
+            <span class="action-icon">💰</span>
+            <strong>My Contributions</strong>
+            <span>Review your confirmed savings contributions.</span>
+          </a>
+
+          <a href="groups.html" class="action-card">
+            <span class="action-icon">🤝</span>
+            <strong>My Groups</strong>
+            <span>View your Chilimba groups.</span>
+          </a>
+
+          <a href="join-group.html" class="action-card">
+            <span class="action-icon">➕</span>
+            <strong>Join a Group</strong>
+            <span>Join using a valid invitation code.</span>
+          </a>
+
+          <a href="loans.html" class="action-card">
+            <span class="action-icon">🏦</span>
+            <strong>Loans & Borrowing</strong>
+            <span>View loan information and applications.</span>
+          </a>
+
+          <a href="polls.html" class="action-card">
+            <span class="action-icon">🗳️</span>
+            <strong>Polls & Voting</strong>
+            <span>Participate in group decisions.</span>
+          </a>
+
+          <a href="announcements.html" class="action-card">
+            <span class="action-icon">📢</span>
+            <strong>Announcements</strong>
+            <span>Read messages from group leaders.</span>
+          </a>
+
+          <a href="meeting-minutes.html" class="action-card">
+            <span class="action-icon">📝</span>
+            <strong>Meeting Minutes</strong>
+            <span>Review group meeting records.</span>
+          </a>
+
+          <a href="group-directory.html" class="action-card">
+            <span class="action-icon">👨‍👩‍👧</span>
+            <strong>Group Directory</strong>
+            <span>View members of your selected group.</span>
+          </a>
+
+          <a href="subscription.html" class="action-card">
+            <span class="action-icon">💳</span>
+            <strong>Group Subscription</strong>
+            <span>Check trial status and payment requests.</span>
+          </a>
+
+          <a href="transactions.html" class="action-card">
+            <span class="action-icon">📑</span>
+            <strong>Transaction History</strong>
+            <span>Review recorded account activity.</span>
+          </a>
+
+          <a href="settings.html" class="action-card">
+            <span class="action-icon">⚙️</span>
+            <strong>Account Settings</strong>
+            <span>Manage your personal details.</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="dashboard-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Recent Transactions</h2>
+            <p>Your latest recorded account activity.</p>
+          </div>
+          <a href="transactions.html" class="panel-link">View all</a>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="dashboard-table">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th>Date</th>
+                <th>Type / Status</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody id="recent-transactions">
+              <tr><td colspan="4">Transaction history is not enabled by the current Firestore rules.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <footer class="dashboard-footer">
+        Chilimba Smart Save · Learn to save. Save together. Grow together.
+      </footer>
+    </main>
+  </div>
+
+  <script type="module" src="../../js/member-dashboard.js"></script>
+</body>
+</html>

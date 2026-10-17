@@ -1,0 +1,214 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#123b2a">
+<title>Group Announcements | Chilimba Smart Save</title>
+<link rel="stylesheet" href="../../css/style.css">
+<style>
+body{font-family:Arial,sans-serif;background:#f7faf8;color:#17231d;margin:0}
+main{max-width:750px;margin:25px auto;padding:16px}
+.card{background:white;padding:20px;border-radius:12px;margin-bottom:18px;box-shadow:0 3px 12px #0000000c}
+h1,h2{color:#123b2a}
+label{display:block;font-weight:bold;margin:14px 0 6px}
+input,select,textarea{box-sizing:border-box;width:100%;padding:12px;border:1px solid #ccd7d0;border-radius:7px;font-size:16px}
+textarea{min-height:100px}
+button{background:#123b2a;color:white;border:0;border-radius:7px;padding:12px;width:100%;margin-top:15px;font-weight:bold}
+a{color:#123b2a}
+.announcement{border-bottom:1px solid #e1e8e3;padding:14px 0;overflow-wrap:anywhere}
+.muted{color:#5b6b61;font-size:14px}
+</style>
+</head>
+<body>
+<main>
+<p><a href="dashboard.html">← Back to dashboard</a></p>
+<h1>Group Announcements</h1>
+
+<section class="card">
+<h2>Post an announcement</h2>
+<p>Group owners and appointed secretaries can publish announcements.</p>
+<form id="announcementForm">
+<label for="group">Select group</label>
+<select id="group" required>
+<option value="">Loading groups...</option>
+</select>
+
+<label for="title">Announcement title</label>
+<input id="title" maxlength="120" required placeholder="Enter title">
+
+<label for="body">Announcement message</label>
+<textarea id="body" maxlength="3000" required placeholder="Write your announcement"></textarea>
+
+<button id="postButton" type="submit">Publish Announcement</button>
+<p id="message" role="status"></p>
+</form>
+</section>
+
+<section class="card">
+<h2>Latest announcements</h2>
+<label for="filterGroup">View group announcements</label>
+<select id="filterGroup">
+<option value="">Select a group</option>
+</select>
+<div id="announcements">Select a group to view announcements.</div>
+</section>
+</main>
+
+<script type="module">
+import {auth,db} from "../../js/firebase.js";
+import {onAuthStateChanged} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import {
+ collection,query,where,getDocs,doc,getDoc,addDoc,serverTimestamp
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+const groupInput=document.getElementById("group");
+const filterInput=document.getElementById("filterGroup");
+const form=document.getElementById("announcementForm");
+const message=document.getElementById("message");
+const output=document.getElementById("announcements");
+const postButton=document.getElementById("postButton");
+
+let user=null;
+let profile=null;
+let groups=[];
+
+function say(text){message.textContent=text;}
+
+onAuthStateChanged(auth,async current=>{
+ if(!current){location.href="../login.html";return;}
+ user=current;
+
+ try{
+  const p=await getDoc(doc(db,"users",user.uid));
+  if(!p.exists()||p.data().active!==true){
+   say("Your account is not active.");
+   postButton.disabled=true;
+   return;
+  }
+  profile=p.data();
+
+  const result=await getDocs(query(
+   collection(db,"groups"),
+   where("memberUids","array-contains",user.uid)
+  ));
+
+  groups=result.docs.map(s=>({id:s.id,...s.data()}));
+  groupInput.replaceChildren(new Option("Select a group",""));
+  filterInput.replaceChildren(new Option("Select a group",""));
+
+  groups.forEach(g=>{
+   groupInput.add(new Option(g.name,g.id));
+   filterInput.add(new Option(g.name,g.id));
+  });
+
+  if(!groups.length){
+   say("Join a group first.");
+   postButton.disabled=true;
+  }
+ }catch(e){
+  console.error(e);
+  say("Could not load groups. Check your connection and Firestore rules.");
+ }
+});
+
+filterInput.addEventListener("change",loadAnnouncements);
+
+async function loadAnnouncements(){
+ const groupId=filterInput.value;
+ output.replaceChildren();
+
+ if(!groupId){
+  output.textContent="Select a group to view announcements.";
+  return;
+ }
+
+ output.textContent="Loading announcements...";
+
+ try{
+  const result=await getDocs(query(
+   collection(db,"announcements"),
+   where("groupId","==",groupId)
+  ));
+
+  output.replaceChildren();
+
+  if(result.empty){
+   output.textContent="No announcements for this group yet.";
+   return;
+  }
+
+  const items=result.docs.map(d=>({id:d.id,...d.data()}));
+  items.sort((a,b)=>{
+   const ta=a.createdAt?.toMillis?.()||0;
+   const tb=b.createdAt?.toMillis?.()||0;
+   return tb-ta;
+  });
+
+  items.forEach(a=>{
+   const item=document.createElement("article");
+   item.className="announcement";
+
+   const title=document.createElement("h3");
+   title.textContent=a.title||"Announcement";
+
+   const body=document.createElement("p");
+   body.textContent=a.body||"";
+
+   const date=document.createElement("p");
+   date.className="muted";
+   date.textContent="Posted by: "+(a.createdBy===user.uid?"You":a.createdBy||"Group administrator");
+
+   item.append(title,body,date);
+   output.append(item);
+  });
+ }catch(e){
+  console.error(e);
+  output.textContent="Could not load announcements. Check your Firestore rules.";
+ }
+}
+
+form.addEventListener("submit",async event=>{
+ event.preventDefault();
+
+ const group=groups.find(g=>g.id===groupInput.value);
+ const title=document.getElementById("title").value.trim();
+ const body=document.getElementById("body").value.trim();
+
+ if(!group||!title||!body){
+  say("Complete all fields.");
+  return;
+ }
+
+ if(group.ownerUid!==user.uid&&group.secretaryUid!==user.uid){
+  say("Only the group owner or appointed secretary can publish announcements.");
+  return;
+ }
+
+ postButton.disabled=true;
+ say("Publishing...");
+
+ try{
+  await addDoc(collection(db,"announcements"),{
+   groupId:group.id,
+   title,
+   body,
+   createdBy:user.uid,
+   createdAt:serverTimestamp()
+  });
+
+  form.reset();
+  say("Announcement published.");
+  filterInput.value=group.id;
+  await loadAnnouncements();
+ }catch(e){
+  console.error(e);
+  say("Could not publish. Check your internet connection and Firestore rules.");
+ }finally{
+  postButton.disabled=false;
+ }
+});
+</script>
+</body>
+</html>

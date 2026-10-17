@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#123b2a">
+  <title>Transactions | Chilimba Smart Save</title>
+
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="../../css/dashboard.css">
+
+  <style>
+    .transactions-content {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .transactions-card {
+      background: #fff;
+      padding: 22px;
+      margin: 18px 0;
+      border-radius: 14px;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    .transactions-card h2 {
+      color: #123b2a;
+      margin-top: 0;
+    }
+
+    .transactions-note {
+      color: #66736a;
+      line-height: 1.6;
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      margin-top: 18px;
+    }
+
+    .transactions-table {
+      width: 100%;
+      min-width: 650px;
+      border-collapse: collapse;
+    }
+
+    .transactions-table th,
+    .transactions-table td {
+      text-align: left;
+      padding: 13px 12px;
+      border-bottom: 1px solid #e5ebe6;
+    }
+
+    .transactions-table th {
+      background: #f2f7f3;
+      color: #123b2a;
+    }
+
+    .transaction-status {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 20px;
+      background: #edf2ee;
+      color: #526458;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-confirmed,
+    .status-approved,
+    .status-completed {
+      background: #e0f4e7;
+      color: #176534;
+    }
+
+    .status-pending {
+      background: #fff2d5;
+      color: #805600;
+    }
+
+    .status-rejected,
+    .status-failed {
+      background: #fde7e7;
+      color: #a32121;
+    }
+
+    .back-link {
+      display: inline-block;
+      color: #123b2a;
+      font-weight: 600;
+      text-decoration: none;
+      margin-bottom: 16px;
+    }
+
+    .message-box {
+      padding: 12px;
+      margin: 12px 0;
+      border-radius: 8px;
+      line-height: 1.5;
+    }
+
+    .message-info {
+      color: #28543b;
+      background: #edf6ef;
+    }
+
+    .message-error {
+      color: #922b21;
+      background: #fdecea;
+    }
+
+    .empty-row {
+      color: #66736a;
+      text-align: center !important;
+      padding: 24px !important;
+    }
+
+    @media (max-width: 600px) {
+      .transactions-content {
+        padding: 14px;
+      }
+
+      .transactions-card {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="dashboard-layout">
+    <aside class="dashboard-sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <h2>Chilimba Smart Save</h2>
+        <p>Learn to save. Save together. Grow together.</p>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="contributions.html">My Contributions</a>
+        <a href="groups.html">My Groups</a>
+        <a href="transactions.html" aria-current="page">Transactions</a>
+        <a href="settings.html">Settings</a>
+      </nav>
+
+      <button type="button" id="logout-button">Log Out</button>
+    </aside>
+
+    <main class="dashboard-main">
+      <header class="dashboard-topbar">
+        <button
+          type="button"
+          id="menu-toggle"
+          aria-label="Open navigation"
+          aria-expanded="false"
+        >☰</button>
+        <h1>Transactions</h1>
+      </header>
+
+      <section class="transactions-content">
+        <a class="back-link" href="dashboard.html">
+          ← Back to Dashboard
+        </a>
+
+        <section class="transactions-card">
+          <h2>My Transaction History</h2>
+
+          <p class="transactions-note">
+            Review the transactions recorded for your account.
+            Pending and rejected records are shown separately from
+            completed transactions.
+          </p>
+
+          <div
+            id="transactions-message"
+            class="transactions-note"
+            role="status"
+            aria-live="polite"
+          >Loading transactions...</div>
+
+          <div class="table-wrap">
+            <table class="transactions-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Description</th>
+                  <th>Type</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+
+              <tbody id="transactions-list">
+                <tr>
+                  <td colspan="5" class="empty-row">
+                    Loading transaction records...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="transactions-card">
+          <h2>Important Information</h2>
+          <p class="transactions-note">
+            Transactions shown here are records stored in Firestore.
+            Their accuracy depends on the application's payment and
+            approval processes. A record marked completed should only
+            be written after the relevant transaction has been verified.
+          </p>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script type="module">
+    import { auth, db } from "../../js/firebase.js";
+
+    import {
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+    import {
+      collection,
+      doc,
+      getDoc,
+      getDocs,
+      query,
+      where
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+    const sidebar = document.getElementById("sidebar");
+    const menuToggle = document.getElementById("menu-toggle");
+    const logoutButton = document.getElementById("logout-button");
+    const message = document.getElementById("transactions-message");
+    const list = document.getElementById("transactions-list");
+
+    function showMessage(text, isError = false) {
+      message.textContent = text;
+      message.className = "message-box " +
+        (isError ? "message-error" : "message-info");
+    }
+
+    function formatDate(value) {
+      if (!value) return "Not recorded";
+
+      let date;
+
+      if (typeof value.toDate === "function") {
+        date = value.toDate();
+      } else {
+        date = new Date(value);
+      }
+
+      if (Number.isNaN(date.getTime())) {
+        return "Not recorded";
+      }
+
+      return new Intl.DateTimeFormat("en-ZM", {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      }).format(date);
+    }
+
+    function dateValue(value) {
+      if (value && typeof value.toMillis === "function") {
+        return value.toMillis();
+      }
+
+      const time = new Date(value || 0).getTime();
+      return Number.isNaN(time) ? 0 : time;
+    }
+
+    function formatMoney(amount) {
+      return new Intl.NumberFormat("en-ZM", {
+        style: "currency",
+        currency: "ZMW",
+        minimumFractionDigits: 2
+      }).format(amount);
+    }
+
+    function cleanText(value, fallback) {
+      return typeof value === "string" && value.trim()
+        ? value.trim()
+        : fallback;
+    }
+
+    function normalizeStatus(value) {
+      return String(value || "pending").trim().toLowerCase();
+    }
+
+    function statusLabel(value) {
+      return cleanText(value, "pending")
+        .replace(/[_-]+/g, " ")
+        .replace(/\b\w/g, letter => letter.toUpperCase());
+    }
+
+    function addCell(row, text) {
+      const cell = document.createElement("td");
+      cell.textContent = text;
+      row.appendChild(cell);
+      return cell;
+    }
+
+    function renderTransactions(records) {
+      list.replaceChildren();
+
+      if (records.length === 0) {
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+
+        cell.colSpan = 5;
+        cell.className = "empty-row";
+        cell.textContent = "No transactions were found for your account.";
+
+        row.appendChild(cell);
+        list.appendChild(row);
+        return;
+      }
+
+      records.forEach(record => {
+        const row = document.createElement("tr");
+
+        addCell(row, formatDate(record.createdAt));
+
+        addCell(
+          row,
+          cleanText(
+            record.description,
+            cleanText(record.groupName, "Transaction")
+          )
+        );
+
+        addCell(row, cleanText(record.type, "Not specified"));
+
+        const amount =
+          typeof record.amount === "number" &&
+          Number.isFinite(record.amount) &&
+          record.amount >= 0
+            ? record.amount
+            : null;
+
+        addCell(
+          row,
+          amount === null ? "Unavailable" : formatMoney(amount)
+        );
+
+        const status = normalizeStatus(record.status);
+        const cell = document.createElement("td");
+        const badge = document.createElement("span");
+
+        badge.className = "transaction-status";
+
+        if (
+          status === "confirmed" ||
+          status === "approved" ||
+          status === "completed"
+        ) {
+          badge.classList.add("status-" + status);
+        } else if (status === "pending") {
+          badge.classList.add("status-pending");
+        } else if (status === "rejected" || status === "failed") {
+          badge.classList.add("status-" + status);
+        }
+
+        badge.textContent = statusLabel(status);
+        cell.appendChild(badge);
+        row.appendChild(cell);
+
+        list.appendChild(row);
+      });
+    }
+
+    async function loadTransactions(user) {
+      showMessage("Loading your transactions...");
+
+      try {
+        const profileSnapshot = await getDoc(
+          doc(db, "users", user.uid)
+        );
+
+        if (!profileSnapshot.exists()) {
+          throw new Error("Your member profile was not found.");
+        }
+
+        const profile = profileSnapshot.data();
+
+        if (profile.role !== "member" || profile.active !== true) {
+          await signOut(auth);
+          window.location.replace("../login.html");
+          return;
+        }
+
+        /*
+         * Expected Firestore structure:
+         * Collection: transactions
+         * Fields:
+         * memberUid, description, groupName, type,
+         * amount, status, createdAt
+         *
+         * memberUid must match the signed-in user's UID.
+         */
+        const transactionsQuery = query(
+          collection(db, "transactions"),
+          where("memberUid", "==", user.uid)
+        );
+
+        const snapshot = await getDocs(transactionsQuery);
+
+        const records = snapshot.docs.map(item => ({
+          id: item.id,
+          ...item.data()
+        }));
+
+        records.sort(
+          (a, b) => dateValue(b.createdAt) - dateValue(a.createdAt)
+        );
+
+        renderTransactions(records);
+
+        showMessage(
+          records.length
+            ? `Loaded ${records.length} transaction record(s).`
+            : "No transaction records were found yet."
+        );
+      } catch (error) {
+        console.error("Transaction loading failed:", error);
+
+        list.replaceChildren();
+
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+
+        cell.colSpan = 5;
+        cell.className = "empty-row";
+        cell.textContent = "Unable to load transaction records.";
+
+        row.appendChild(cell);
+        list.appendChild(row);
+
+        showMessage(
+          error.code === "permission-denied"
+            ? "Firebase security rules blocked access to your transactions."
+            : error.message || "Unable to load transactions. Please try again.",
+          true
+        );
+      }
+    }
+
+    menuToggle.addEventListener("click", () => {
+      const isOpen = sidebar.classList.toggle("open");
+      menuToggle.setAttribute("aria-expanded", String(isOpen));
+    });
+
+    logoutButton.addEventListener("click", async () => {
+      logoutButton.disabled = true;
+
+      try {
+        await signOut(auth);
+        window.location.replace("../login.html");
+      } catch (error) {
+        console.error("Logout failed:", error);
+        showMessage("Unable to log out. Please try again.", true);
+        logoutButton.disabled = false;
+      }
+    });
+
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        window.location.replace("../login.html");
+        return;
+      }
+
+      loadTransactions(user);
+    });
+  </script>
+</body>
+</html>

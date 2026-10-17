@@ -1,0 +1,335 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accountant Dashboard | Chilimba Smart Save</title>
+  <style>
+    :root {
+      --green: #123b2a;
+      --light: #f3f7f4;
+      --white: #fff;
+      --text: #17231d;
+      --border: #dce6df;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--light);
+      color: var(--text);
+    }
+    header {
+      background: var(--green);
+      color: white;
+      padding: 22px 16px;
+    }
+    header h1 { margin: 0 0 6px; font-size: 22px; }
+    header p { margin: 0; font-size: 14px; }
+    main { max-width: 900px; margin: auto; padding: 18px; }
+    .panel, .tile, .notice {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .tiles {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+    }
+    .tile strong {
+      display: block;
+      color: var(--green);
+      font-size: 20px;
+      margin: 8px 0;
+    }
+    label { display: block; margin: 12px 0 6px; font-weight: bold; }
+    select, input, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #b9c9be;
+      border-radius: 8px;
+      font: inherit;
+      background: white;
+    }
+    textarea { min-height: 90px; }
+    button, .link {
+      display: inline-block;
+      background: var(--green);
+      color: white;
+      border: 0;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-weight: bold;
+      text-decoration: none;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+    .muted { color: #5d6b62; font-size: 14px; }
+    .record {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      overflow-wrap: anywhere;
+    }
+    #status { white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Accountant Dashboard</h1>
+    <p>Chilimba Smart Save · Contributions, loans and reconciliation</p>
+  </header>
+
+  <main>
+    <div class="notice">
+      <strong id="welcome">Checking your account…</strong>
+      <p id="status" class="muted">Connecting to Firebase.</p>
+    </div>
+
+    <section class="panel">
+      <label for="group">Select group</label>
+      <select id="group">
+        <option value="">Loading your groups…</option>
+      </select>
+    </section>
+
+    <div class="tiles">
+      <div class="tile">Confirmed contributions<strong id="contributions">K0.00</strong></div>
+      <div class="tile">Loans recorded<strong id="loans">0</strong></div>
+      <div class="tile">Outstanding balance<strong id="outstanding">K0.00</strong></div>
+    </div>
+
+    <section class="panel">
+      <h2>Contribution records</h2>
+      <p class="muted">Only confirmed contributions are included in the total.</p>
+      <div id="contribution-list">Select your group to load records.</div>
+    </section>
+
+    <section class="panel">
+      <h2>Loans and repayments</h2>
+      <div id="loan-list">Select your group to load records.</div>
+    </section>
+
+    <section class="panel">
+      <h2>Report a discrepancy</h2>
+      <form id="discrepancy-form">
+        <label for="report-title">Issue title</label>
+        <input id="report-title" maxlength="100" required>
+
+        <label for="report-details">Explain the difference found</label>
+        <textarea id="report-details" maxlength="3000" required></textarea>
+
+        <button id="report-button" type="submit">Submit discrepancy report</button>
+      </form>
+      <div id="report-list"></div>
+    </section>
+
+    <a class="link" href="dashboard.html">Back to member dashboard</a>
+    <button id="logout" type="button">Log out</button>
+  </main>
+
+  <script type="module">
+    import { auth, db } from "../../js/firebase.js";
+    import { onAuthStateChanged, signOut } from
+      "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import {
+      collection, query, where, getDocs, addDoc, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+    const $ = id => document.getElementById(id);
+    let user = null;
+    let accountantGroups = [];
+
+    const money = amount => "K" + Number(amount || 0).toLocaleString("en-ZM", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+
+    function showStatus(message) {
+      $("status").textContent = message;
+    }
+
+    function selectedGroup() {
+      return accountantGroups.find(g => g.id === $("group").value);
+    }
+
+    async function loadFinancialRecords() {
+      const group = selectedGroup();
+      $("contribution-list").replaceChildren();
+      $("loan-list").replaceChildren();
+      $("report-list").replaceChildren();
+
+      if (!group) {
+        showStatus("Select a group assigned to you as accountant.");
+        return;
+      }
+
+      try {
+        const [contributionSnap, loanSnap, reportSnap] = await Promise.all([
+          getDocs(query(
+            collection(db, "contributions"),
+            where("groupId", "==", group.id)
+          )),
+          getDocs(query(
+            collection(db, "loans"),
+            where("groupId", "==", group.id)
+          )),
+          getDocs(query(
+            collection(db, "discrepancies"),
+            where("groupId", "==", group.id)
+          ))
+        ]);
+
+        let confirmedTotal = 0;
+        contributionSnap.forEach(docSnap => {
+          const data = docSnap.data();
+          if (data.status === "confirmed") confirmedTotal += Number(data.amount || 0);
+
+          const item = document.createElement("div");
+          item.className = "record";
+          const title = document.createElement("strong");
+          title.textContent = data.memberName || data.memberUid || "Member";
+          const details = document.createElement("p");
+          details.textContent =
+            `${money(data.amount)} · ${data.status || "Unspecified status"}`;
+          item.append(title, details);
+          $("contribution-list").appendChild(item);
+        });
+
+        if (contributionSnap.empty) {
+          $("contribution-list").textContent = "No contribution records found.";
+        }
+
+        let outstandingTotal = 0;
+        $("loans").textContent = String(loanSnap.size);
+
+        loanSnap.forEach(docSnap => {
+          const data = docSnap.data();
+          const amount = Number(data.amount || 0);
+          const repaid = Number(data.repaidAmount || 0);
+          const outstanding = Math.max(0, amount - repaid);
+          outstandingTotal += outstanding;
+
+          const item = document.createElement("div");
+          item.className = "record";
+          const title = document.createElement("strong");
+          title.textContent = data.borrowerName || data.recipient || "Borrower";
+          const details = document.createElement("p");
+          details.textContent =
+            `Loan: ${money(amount)} · Repaid: ${money(repaid)} · Outstanding: ${money(outstanding)}`;
+          item.append(title, details);
+          $("loan-list").appendChild(item);
+        });
+
+        if (loanSnap.empty) {
+          $("loan-list").textContent = "No loan records found.";
+        }
+
+        $("contributions").textContent = money(confirmedTotal);
+        $("outstanding").textContent = money(outstandingTotal);
+
+        reportSnap.forEach(docSnap => {
+          const data = docSnap.data();
+          const item = document.createElement("div");
+          item.className = "record";
+          const title = document.createElement("strong");
+          title.textContent = data.title || "Discrepancy report";
+          const details = document.createElement("p");
+          details.textContent =
+            `${data.details || ""} · Status: ${data.status || "Reported"}`;
+          item.append(title, details);
+          $("report-list").appendChild(item);
+        });
+
+        if (reportSnap.empty) {
+          $("report-list").textContent = "No discrepancy reports recorded.";
+        }
+
+        showStatus("Financial records loaded. Verify totals against the group's actual records.");
+      } catch (error) {
+        console.error(error);
+        showStatus(
+          "Could not load financial records. The required Firestore collections and access rules must be configured."
+        );
+      }
+    }
+
+    $("group").addEventListener("change", loadFinancialRecords);
+
+    $("discrepancy-form").addEventListener("submit", async event => {
+      event.preventDefault();
+      const group = selectedGroup();
+      if (!group || !user) return showStatus("Select an authorised group first.");
+
+      $("report-button").disabled = true;
+      try {
+        await addDoc(collection(db, "discrepancies"), {
+          groupId: group.id,
+          title: $("report-title").value.trim(),
+          details: $("report-details").value.trim(),
+          reportedBy: user.uid,
+          status: "reported",
+          createdAt: serverTimestamp()
+        });
+        $("discrepancy-form").reset();
+        showStatus("Discrepancy report submitted.");
+        await loadFinancialRecords();
+      } catch (error) {
+        console.error(error);
+        showStatus("Report not saved. Check the Firestore permissions for discrepancies.");
+      } finally {
+        $("report-button").disabled = false;
+      }
+    });
+
+    onAuthStateChanged(auth, async currentUser => {
+      if (!currentUser) {
+        location.href = "../login.html";
+        return;
+      }
+
+      user = currentUser;
+      try {
+        const snapshot = await getDocs(query(
+          collection(db, "groups"),
+          where("memberUids", "array-contains", user.uid)
+        ));
+
+        accountantGroups = snapshot.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .filter(g => g.accountantUid === user.uid);
+
+        $("welcome").textContent = "Welcome, Accountant";
+
+        $("group").replaceChildren();
+        if (!accountantGroups.length) {
+          $("group").add(new Option("No accountant assignment found", ""));
+          showStatus(
+            "Your account is signed in, but no group currently identifies you as its accountant. " +
+            "Secure role assignment and Firestore rules are required before financial data can be accessed."
+          );
+          $("report-button").disabled = true;
+          return;
+        }
+
+        accountantGroups.forEach(g =>
+          $("group").add(new Option(g.name || "Unnamed group", g.id))
+        );
+
+        await loadFinancialRecords();
+      } catch (error) {
+        console.error(error);
+        showStatus("Could not load groups. Check Firebase connection and Firestore rules.");
+      }
+    });
+
+    $("logout").addEventListener("click", async () => {
+      await signOut(auth);
+      location.href = "../login.html";
+    });
+  </script>
+</body>
+</html>

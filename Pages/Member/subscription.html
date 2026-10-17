@@ -1,0 +1,775 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Group Subscription | Chilimba Smart Save</title>
+
+  <style>
+    :root {
+      --green: #123b2a;
+      --light-green: #eaf4ed;
+      --background: #f7faf8;
+      --text: #17231d;
+      --muted: #68756d;
+      --border: #dce5df;
+      --white: #ffffff;
+      --danger: #a52828;
+      --warning: #875a00;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--background);
+      color: var(--text);
+    }
+
+    header {
+      background: var(--green);
+      color: white;
+      padding: 20px 16px;
+    }
+
+    .header-inner {
+      max-width: 900px;
+      margin: auto;
+    }
+
+    header h1 {
+      margin: 0 0 7px;
+      font-size: 23px;
+    }
+
+    header p {
+      margin: 0;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    main {
+      width: 100%;
+      max-width: 900px;
+      margin: 22px auto;
+      padding: 0 14px 35px;
+    }
+
+    .intro, .group-card, .notice {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .intro h2, .group-card h2 {
+      margin-top: 0;
+      color: var(--green);
+    }
+
+    .intro p, .muted {
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .group-card h2 {
+      font-size: 20px;
+      margin-bottom: 8px;
+      overflow-wrap: anywhere;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 20px;
+      background: var(--light-green);
+      color: var(--green);
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    .status.expired {
+      background: #fcebea;
+      color: var(--danger);
+    }
+
+    .status.pending {
+      background: #fff2d5;
+      color: var(--warning);
+    }
+
+    .details {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    .detail {
+      padding: 12px;
+      background: #f7faf8;
+      border-radius: 8px;
+      overflow-wrap: anywhere;
+    }
+
+    .detail small {
+      display: block;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .detail strong {
+      font-size: 16px;
+    }
+
+    .fee {
+      font-size: 25px;
+      font-weight: bold;
+      color: var(--green);
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: bold;
+      margin: 14px 0 7px;
+    }
+
+    input, select {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #cbd7cf;
+      border-radius: 8px;
+      background: white;
+      color: var(--text);
+      font-size: 15px;
+    }
+
+    button, .back-link {
+      display: inline-block;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 16px;
+      background: var(--green);
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 15px;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .secondary {
+      background: #e9efeb;
+      color: var(--green);
+    }
+
+    .message {
+      display: none;
+      padding: 12px;
+      border-radius: 8px;
+      margin: 12px 0;
+      font-size: 14px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    .message.success {
+      display: block;
+      background: #e6f5e9;
+      color: #155d2b;
+    }
+
+    .message.error {
+      display: block;
+      background: #fcebea;
+      color: #8e2020;
+    }
+
+    .message.info {
+      display: block;
+      background: #eef3f0;
+      color: var(--green);
+    }
+
+    .payment-form {
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+      margin-top: 16px;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 25px 12px;
+      color: var(--muted);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 30px;
+      color: var(--muted);
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 480px) {
+      .details {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      header h1 {
+        font-size: 21px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>Chilimba Smart Save</h1>
+      <p>Group Subscription Management</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="intro">
+      <h2>Manage Your Group Subscription</h2>
+      <p>
+        Each group has its own 30-day trial and subscription.
+        The group owner is responsible for submitting that group's
+        subscription payment request.
+      </p>
+      <p>
+        Your subscription pays for the platform, not the money your
+        group saves together. Your group records remain stored after
+        a trial or subscription expires.
+      </p>
+      <a class="back-link" href="dashboard.html">Back to Dashboard</a>
+    </section>
+
+    <div id="pageMessage" class="message"></div>
+    <div id="groupsContainer" class="loading">Loading your groups...</div>
+  </main>
+
+  <footer>
+    Learn to save. Save together. Grow together.
+    <br>
+    Proudly Zambian
+  </footer>
+
+  <script type="module">
+    import { auth, db } from "../../js/firebase.js";
+
+    import {
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+    import {
+      collection,
+      query,
+      where,
+      getDocs,
+      getDoc,
+      doc,
+      addDoc,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+    const groupsContainer = document.getElementById("groupsContainer");
+    const pageMessage = document.getElementById("pageMessage");
+
+    let currentUser = null;
+    let ownedGroups = [];
+    let pendingPaymentGroupIds = new Set();
+
+    function escapeHTML(value) {
+      return String(value ?? "").replace(/[&<>"']/g, character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      })[character]);
+    }
+
+    function showMessage(message, type = "info") {
+      pageMessage.className = "message " + type;
+      pageMessage.textContent = message;
+      pageMessage.style.display = "block";
+    }
+
+    function hideMessage() {
+      pageMessage.className = "message";
+      pageMessage.textContent = "";
+      pageMessage.style.display = "none";
+    }
+
+    function monthlyFee(memberCount) {
+      if (memberCount <= 5) return 20;
+      if (memberCount <= 10) return 30;
+
+      return 30 + 15 * Math.ceil((memberCount - 10) / 5);
+    }
+
+    function dateValue(value) {
+      if (!value) return null;
+
+      if (typeof value.toDate === "function") {
+        return value.toDate();
+      }
+
+      if (value instanceof Date) {
+        return value;
+      }
+
+      return null;
+    }
+
+    function formatDate(value) {
+      const date = dateValue(value);
+
+      if (!date) return "Not set";
+
+      return date.toLocaleDateString("en-ZM", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+      });
+    }
+
+    function getSubscriptionState(group) {
+      const now = Date.now();
+      const trialEnd = dateValue(group.trialEndsAt);
+      const paidUntil = dateValue(group.subscriptionPaidUntil);
+
+      if (
+        group.subscriptionStatus === "active" &&
+        paidUntil &&
+        paidUntil.getTime() > now
+      ) {
+        return {
+          label: "Subscription active",
+          expired: false,
+          access: true,
+          endDate: paidUntil
+        };
+      }
+
+      if (
+        group.subscriptionStatus === "trial" &&
+        trialEnd &&
+        trialEnd.getTime() > now
+      ) {
+        return {
+          label: "Free trial active",
+          expired: false,
+          access: true,
+          endDate: trialEnd
+        };
+      }
+
+      return {
+        label: "Subscription expired",
+        expired: true,
+        access: false,
+        endDate: paidUntil || trialEnd
+      };
+    }
+
+    async function loadPendingRequests() {
+      pendingPaymentGroupIds = new Set();
+
+      const paymentsQuery = query(
+        collection(db, "subscriptionPayments"),
+        where("ownerUid", "==", currentUser.uid),
+        where("status", "==", "pending")
+      );
+
+      const snapshot = await getDocs(paymentsQuery);
+
+      snapshot.forEach(paymentDoc => {
+        const payment = paymentDoc.data();
+
+        if (payment.groupId) {
+          pendingPaymentGroupIds.add(payment.groupId);
+        }
+      });
+    }
+
+    async function loadGroups() {
+      hideMessage();
+      groupsContainer.className = "loading";
+      groupsContainer.textContent = "Loading your groups...";
+
+      try {
+        const groupsQuery = query(
+          collection(db, "groups"),
+          where("memberUids", "array-contains", currentUser.uid)
+        );
+
+        const snapshot = await getDocs(groupsQuery);
+
+        ownedGroups = [];
+
+        snapshot.forEach(groupDoc => {
+          const group = groupDoc.data();
+
+          if (group.ownerUid === currentUser.uid) {
+            ownedGroups.push({
+              id: groupDoc.id,
+              ...group
+            });
+          }
+        });
+
+        await loadPendingRequests();
+        renderGroups();
+
+      } catch (error) {
+        console.error("Subscription loading error:", error);
+
+        groupsContainer.className = "empty";
+        groupsContainer.textContent =
+          "Could not load your groups. Check your internet connection and Firestore rules.";
+
+        showMessage(
+          "Subscription data could not be loaded. Make sure the matching Firestore rules have been published.",
+          "error"
+        );
+      }
+    }
+
+    function renderGroups() {
+      if (ownedGroups.length === 0) {
+        groupsContainer.className = "empty";
+        groupsContainer.innerHTML = `
+          <h3>No groups owned by you</h3>
+          <p>Create a group first. Only groups you own appear here.</p>
+          <a class="back-link" href="create-group.html">Create a Group</a>
+        `;
+        return;
+      }
+
+      groupsContainer.className = "";
+
+      groupsContainer.innerHTML = ownedGroups.map(group => {
+        const members = Array.isArray(group.memberUids)
+          ? group.memberUids.length
+          : 1;
+
+        const fee = monthlyFee(members);
+        const subscription = getSubscriptionState(group);
+        const hasPendingRequest = pendingPaymentGroupIds.has(group.id);
+
+        let statusClass = subscription.expired ? "expired" : "";
+
+        if (hasPendingRequest) {
+          statusClass = "pending";
+        }
+
+        const statusLabel = hasPendingRequest
+          ? "Payment request pending CEO review"
+          : subscription.label;
+
+        return `
+          <section class="group-card">
+            <span class="status ${statusClass}">
+              ${escapeHTML(statusLabel)}
+            </span>
+
+            <h2>${escapeHTML(group.name || "Unnamed group")}</h2>
+
+            <div class="details">
+              <div class="detail">
+                <small>Group members</small>
+                <strong>${members}</strong>
+              </div>
+
+              <div class="detail">
+                <small>Monthly subscription</small>
+                <strong class="fee">K${fee}</strong>
+              </div>
+
+              <div class="detail">
+                <small>Trial started</small>
+                <strong>${escapeHTML(formatDate(group.trialStartedAt))}</strong>
+              </div>
+
+              <div class="detail">
+                <small>Paid/trial until</small>
+                <strong>${escapeHTML(formatDate(subscription.endDate))}</strong>
+              </div>
+            </div>
+
+            <p class="muted">
+              The monthly fee is calculated from the number of members
+              currently recorded in this group. Confirm the active-member
+              count before paying.
+            </p>
+
+            ${
+              hasPendingRequest
+                ? `
+                  <div class="message info" style="display:block">
+                    Your request has been submitted. Wait for the CEO to
+                    confirm the payment. Do not submit another request
+                    while this one is pending.
+                  </div>
+                `
+                : `
+                  <div class="payment-form">
+                    <h3>Request Subscription Activation</h3>
+
+                    <p class="muted">
+                      First pay using the official platform payment
+                      instructions supplied by the CEO. Do not send
+                      subscription money to your group's savings account.
+                      This form records a request; it does not transfer money.
+                    </p>
+
+                    <form class="payment-request-form"
+                      data-group-id="${escapeHTML(group.id)}"
+                      data-group-name="${escapeHTML(group.name || "")}"
+                      data-member-count="${members}"
+                      data-fee="${fee}">
+
+                      <label for="method-${escapeHTML(group.id)}">
+                        Payment method
+                      </label>
+
+                      <select id="method-${escapeHTML(group.id)}"
+                        name="paymentMethod" required>
+                        <option value="">Choose payment method</option>
+                        <option value="MTN Mobile Money">MTN Mobile Money</option>
+                        <option value="Airtel Money">Airtel Money</option>
+                        <option value="Zamtel Money">Zamtel Money</option>
+                      </select>
+
+                      <label for="reference-${escapeHTML(group.id)}">
+                        Payment reference (optional)
+                      </label>
+
+                      <input
+                        id="reference-${escapeHTML(group.id)}"
+                        name="paymentReference"
+                        type="text"
+                        maxlength="100"
+                        placeholder="Enter transaction reference if available">
+
+                      <button type="submit">
+                        Submit K${fee} Payment Request
+                      </button>
+                    </form>
+                  </div>
+                `
+            }
+          </section>
+        `;
+      }).join("");
+
+      document.querySelectorAll(".payment-request-form").forEach(form => {
+        form.addEventListener("submit", submitPaymentRequest);
+      });
+    }
+
+    async function submitPaymentRequest(event) {
+      event.preventDefault();
+      hideMessage();
+
+      const form = event.currentTarget;
+      const button = form.querySelector("button[type='submit']");
+
+      if (!currentUser) {
+        showMessage("Please sign in again.", "error");
+        return;
+      }
+
+      const groupId = form.dataset.groupId;
+      const groupName = form.dataset.groupName;
+      const displayedCount = Number(form.dataset.memberCount);
+      const displayedFee = Number(form.dataset.fee);
+
+      const paymentMethod = form.elements.paymentMethod.value;
+      const paymentReference =
+        form.elements.paymentReference.value.trim();
+
+      if (!paymentMethod) {
+        showMessage("Choose the payment method you used.", "error");
+        return;
+      }
+
+      if (pendingPaymentGroupIds.has(groupId)) {
+        showMessage(
+          "This group already has a pending payment request.",
+          "error"
+        );
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "Submitting request...";
+
+      try {
+        // Re-read the group so that we don't submit using an old
+        // member count or an outdated monthly fee.
+        const groupSnapshot = await getDoc(doc(db, "groups", groupId));
+
+        if (!groupSnapshot.exists()) {
+          throw new Error("This group could not be found.");
+        }
+
+        const group = groupSnapshot.data();
+
+        if (group.ownerUid !== currentUser.uid) {
+          throw new Error("Only the group owner can submit this request.");
+        }
+
+        const currentCount = Array.isArray(group.memberUids)
+          ? group.memberUids.length
+          : 1;
+
+        const currentFee = monthlyFee(currentCount);
+
+        if (
+          currentCount !== displayedCount ||
+          currentFee !== displayedFee
+        ) {
+          showMessage(
+            "The group's member count or fee has changed. Refresh the page and check the updated amount before submitting.",
+            "error"
+          );
+
+          await loadGroups();
+          return;
+        }
+
+        // Prevent a duplicate pending request where the current
+        // Firestore security rules support this query.
+        const duplicateQuery = query(
+          collection(db, "subscriptionPayments"),
+          where("groupId", "==", groupId),
+          where("status", "==", "pending")
+        );
+
+        const duplicateSnapshot = await getDocs(duplicateQuery);
+
+        if (!duplicateSnapshot.empty) {
+          pendingPaymentGroupIds.add(groupId);
+          showMessage(
+            "A payment request is already waiting for CEO review.",
+            "error"
+          );
+          await loadGroups();
+          return;
+        }
+
+        await addDoc(collection(db, "subscriptionPayments"), {
+          groupId,
+          groupName: group.name || groupName,
+          ownerUid: currentUser.uid,
+          activeMemberCount: currentCount,
+          amountZmw: currentFee,
+          paymentMethod,
+          paymentReference,
+          status: "pending",
+          createdAt: serverTimestamp()
+        });
+
+        pendingPaymentGroupIds.add(groupId);
+
+        showMessage(
+          "Your payment request was submitted. Your subscription will only activate after the CEO confirms the payment.",
+          "success"
+        );
+
+        await loadGroups();
+
+      } catch (error) {
+        console.error("Payment request error:", error);
+
+        showMessage(
+          error.message ||
+          "The request could not be submitted. Check your internet connection and Firestore rules.",
+          "error"
+        );
+
+      } finally {
+        if (button.isConnected) {
+          button.disabled = false;
+          button.textContent = "Submit Payment Request";
+        }
+      }
+    }
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) {
+        window.location.href = "../login.html";
+        return;
+      }
+
+      currentUser = user;
+
+      try {
+        const profileSnapshot = await getDoc(
+          doc(db, "users", user.uid)
+        );
+
+        if (!profileSnapshot.exists()) {
+          showMessage(
+            "Your user profile was not found. Please contact support.",
+            "error"
+          );
+          groupsContainer.className = "empty";
+          groupsContainer.textContent = "Profile unavailable.";
+          return;
+        }
+
+        const profile = profileSnapshot.data();
+
+        if (profile.active !== true || profile.role !== "member") {
+          showMessage(
+            "This page is for active member accounts that own groups.",
+            "error"
+          );
+          groupsContainer.className = "empty";
+          groupsContainer.textContent = "Access not available.";
+          return;
+        }
+
+        await loadGroups();
+
+      } catch (error) {
+        console.error("Profile loading error:", error);
+        groupsContainer.className = "empty";
+        groupsContainer.textContent =
+          "Unable to verify your account. Please refresh the page.";
+      }
+    });
+  </script>
+</body>
+</html>

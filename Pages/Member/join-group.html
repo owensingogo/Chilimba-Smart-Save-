@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#123b2a">
+  <title>Join a Group | Chilimba Smart Save</title>
+
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="../../css/dashboard.css">
+
+  <style>
+    .join-container {
+      width: min(100% - 32px, 600px);
+      margin: 35px auto;
+    }
+
+    .join-card {
+      background: #fff;
+      padding: 24px;
+      border-radius: 14px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.07);
+    }
+
+    .join-card h1 {
+      color: #123b2a;
+      margin-top: 0;
+    }
+
+    .join-card p {
+      line-height: 1.6;
+    }
+
+    .join-card label {
+      display: block;
+      font-weight: 600;
+      margin: 18px 0 8px;
+    }
+
+    .join-card input,
+    .join-card textarea {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 13px;
+      border: 1px solid #ccd7d0;
+      border-radius: 8px;
+      font: inherit;
+    }
+
+    .join-card button {
+      width: 100%;
+      padding: 13px;
+      margin-top: 15px;
+      background: #123b2a;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .join-card button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .message {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 8px;
+      display: none;
+      overflow-wrap: anywhere;
+      line-height: 1.6;
+    }
+
+    .message.error {
+      display: block;
+      background: #fff0f0;
+      color: #9c2020;
+    }
+
+    .message.success {
+      display: block;
+      background: #eaf7ef;
+      color: #175b35;
+    }
+
+    .group-preview {
+      display: none;
+      margin-top: 18px;
+      padding: 15px;
+      border: 1px solid #dce7df;
+      border-radius: 10px;
+      background: #f7faf8;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-bottom: 18px;
+      color: #123b2a;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    @media (max-width: 600px) {
+      .join-card {
+        padding: 18px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="join-container">
+    <a class="back-link" href="./dashboard.html">
+      ← Back to Dashboard
+    </a>
+
+    <section class="join-card">
+      <h1>Join a Chilimba Group</h1>
+
+      <p>
+        Enter the invitation code shared by the group owner.
+        After submitting your request, you must wait for the
+        group owner to approve it before you become a member.
+      </p>
+
+      <form id="codeForm">
+        <label for="invitationCode">Invitation code</label>
+
+        <input
+          id="invitationCode"
+          type="text"
+          placeholder="Enter invitation code"
+          autocomplete="off"
+          maxlength="30"
+          required
+        >
+
+        <button id="checkButton" type="submit">
+          Check Invitation Code
+        </button>
+      </form>
+
+      <div id="groupPreview" class="group-preview">
+        <h3 id="groupName"></h3>
+        <p id="groupDescription"></p>
+
+        <form id="requestForm">
+          <label for="requestMessage">
+            Message to the group owner (optional)
+          </label>
+
+          <textarea
+            id="requestMessage"
+            rows="3"
+            maxlength="500"
+            placeholder="Introduce yourself if you wish"
+          ></textarea>
+
+          <button id="requestButton" type="submit">
+            Request to Join
+          </button>
+        </form>
+      </div>
+
+      <div
+        id="message"
+        class="message"
+        role="status"
+        aria-live="polite"
+      ></div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { auth, db } from "../../js/firebase.js";
+
+    import {
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+    import {
+      collection,
+      doc,
+      getDoc,
+      addDoc,
+      query,
+      where,
+      getDocs,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+    const codeForm = document.getElementById("codeForm");
+    const requestForm = document.getElementById("requestForm");
+    const codeInput = document.getElementById("invitationCode");
+    const checkButton = document.getElementById("checkButton");
+    const requestButton = document.getElementById("requestButton");
+    const groupPreview = document.getElementById("groupPreview");
+    const groupName = document.getElementById("groupName");
+    const groupDescription = document.getElementById("groupDescription");
+    const requestMessage = document.getElementById("requestMessage");
+    const messageBox = document.getElementById("message");
+
+    let currentUser = null;
+    let currentProfile = null;
+    let invitation = null;
+    let submittingRequest = false;
+
+    function showMessage(text, type = "error") {
+      messageBox.textContent = text;
+      messageBox.className = `message ${type}`;
+    }
+
+    function clearMessage() {
+      messageBox.textContent = "";
+      messageBox.className = "message";
+    }
+
+    function resetInvitation() {
+      invitation = null;
+      groupPreview.style.display = "none";
+      requestButton.disabled = false;
+    }
+
+    function setPageDisabled(disabled) {
+      codeInput.disabled = disabled;
+      checkButton.disabled = disabled;
+      requestButton.disabled = disabled;
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      currentUser = user;
+      currentProfile = null;
+      resetInvitation();
+      clearMessage();
+
+      if (!user) {
+        window.location.replace("../login.html");
+        return;
+      }
+
+      try {
+        const profileSnapshot = await getDoc(
+          doc(db, "users", user.uid)
+        );
+
+        if (!profileSnapshot.exists()) {
+          showMessage(
+            "Your account profile was not found. Please contact support."
+          );
+          setPageDisabled(true);
+          return;
+        }
+
+        const profile = profileSnapshot.data();
+
+        if (profile.active !== true) {
+          showMessage(
+            "Your account is not active. Please contact the platform administrator."
+          );
+          setPageDisabled(true);
+          return;
+        }
+
+        if (profile.role !== "member") {
+          showMessage("This page is for member accounts.");
+          setPageDisabled(true);
+          return;
+        }
+
+        currentProfile = profile;
+        setPageDisabled(false);
+
+      } catch (error) {
+        console.error("Profile check failed:", error);
+
+        showMessage(
+          "Unable to verify your account. Check your connection and try again."
+        );
+
+        setPageDisabled(true);
+      }
+    });
+
+    codeForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearMessage();
+      resetInvitation();
+
+      if (!currentUser || !currentProfile) {
+        showMessage("Please wait while your account is verified.");
+        return;
+      }
+
+      const code = codeInput.value.trim().toUpperCase();
+
+      if (!code) {
+        showMessage("Enter an invitation code.");
+        return;
+      }
+
+      checkButton.disabled = true;
+      checkButton.textContent = "Checking...";
+
+      try {
+        // Read the invitation by its document ID.
+        const invitationSnapshot = await getDoc(
+          doc(db, "groupInvitations", code)
+        );
+
+        if (!invitationSnapshot.exists()) {
+          showMessage(
+            "Invitation code not found. Check the code with the group owner."
+          );
+          return;
+        }
+
+        const inviteData = invitationSnapshot.data();
+
+        if (
+          inviteData.active !== true ||
+          typeof inviteData.groupId !== "string" ||
+          !inviteData.groupId
+        ) {
+          showMessage("This invitation is no longer active.");
+          return;
+        }
+
+        if (inviteData.createdBy === currentUser.uid) {
+          showMessage(
+            "You cannot join your own group using your invitation code."
+          );
+          return;
+        }
+
+        const groupId = inviteData.groupId;
+
+        /*
+         * Do not read the groups document here.
+         * Non-members are not permitted to read private group documents.
+         * The Firestore rules check membership when a request is created.
+         */
+
+        // Check for an existing pending request belonging to this member.
+        const requestsQuery = query(
+          collection(db, "groupJoinRequests"),
+          where("groupId", "==", groupId),
+          where("memberUid", "==", currentUser.uid),
+          where("status", "==", "pending")
+        );
+
+        const existingRequests = await getDocs(requestsQuery);
+
+        if (!existingRequests.empty) {
+          showMessage(
+            "You already have a pending request for this group."
+          );
+          return;
+        }
+
+        invitation = {
+          code,
+          groupId,
+          groupName: inviteData.groupName || "Chilimba Group",
+          groupDescription: inviteData.groupDescription || ""
+        };
+
+        groupName.textContent = invitation.groupName;
+
+        groupDescription.textContent =
+          invitation.groupDescription ||
+          "Invitation found. You can request to join this group.";
+
+        groupPreview.style.display = "block";
+
+        showMessage(
+          "Invitation found. You can now submit your join request.",
+          "success"
+        );
+
+      } catch (error) {
+        console.error(
+          "Invitation check failed:",
+          error.code || error.message
+        );
+
+        showMessage(
+          error.code === "permission-denied"
+            ? "Firebase denied this operation. Check your published Firestore security rules."
+            : "Unable to check this invitation. Check your internet connection and try again."
+        );
+
+      } finally {
+        checkButton.disabled = false;
+        checkButton.textContent = "Check Invitation Code";
+      }
+    });
+
+    requestForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearMessage();
+
+      if (submittingRequest) return;
+
+      if (!currentUser || !currentProfile || !invitation) {
+        showMessage("Check a valid invitation code first.");
+        return;
+      }
+
+      submittingRequest = true;
+      requestButton.disabled = true;
+      requestButton.textContent = "Submitting...";
+
+      try {
+        // Verify that the invitation remains active.
+        const inviteSnapshot = await getDoc(
+          doc(db, "groupInvitations", invitation.code)
+        );
+
+        if (!inviteSnapshot.exists()) {
+          showMessage("This invitation no longer exists. Check another code.");
+          resetInvitation();
+          return;
+        }
+
+        const inviteData = inviteSnapshot.data();
+
+        if (
+          inviteData.active !== true ||
+          inviteData.groupId !== invitation.groupId
+        ) {
+          showMessage(
+            "This invitation is no longer valid. Check another code."
+          );
+          resetInvitation();
+          return;
+        }
+
+        /*
+         * The security rules also validate the invitation, group ID,
+         * signed-in member and membership status before accepting this write.
+         */
+        await addDoc(collection(db, "groupJoinRequests"), {
+          groupId: invitation.groupId,
+          groupName: invitation.groupName,
+          invitationCode: invitation.code,
+          memberUid: currentUser.uid,
+          memberName:
+            currentProfile.fullName ||
+            currentUser.displayName ||
+            "",
+          memberPhone: currentProfile.phone || "",
+          memberPlace:
+            currentProfile.place ||
+            currentProfile.location ||
+            "",
+          message: requestMessage.value.trim(),
+          status: "pending",
+          createdAt: serverTimestamp()
+        });
+
+        requestForm.reset();
+        codeInput.value = "";
+        resetInvitation();
+
+        showMessage(
+          "Your request was submitted successfully. You must wait for the group owner to approve it.",
+          "success"
+        );
+
+      } catch (error) {
+        console.error(
+          "Join request failed:",
+          error.code || error.message
+        );
+
+        if (error.code === "permission-denied") {
+          showMessage(
+            "Firebase denied the request. Confirm that your latest Firestore security rules are published and that the invitation is valid."
+          );
+        } else {
+          showMessage(
+            "Your request could not be submitted. Check your connection and try again."
+          );
+        }
+
+      } finally {
+        submittingRequest = false;
+        requestButton.disabled = false;
+        requestButton.textContent = "Request to Join";
+      }
+    });
+  </script>
+</body>
+</html>

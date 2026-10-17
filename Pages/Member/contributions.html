@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#123b2a">
+  <title>My Contributions | Chilimba Smart Save</title>
+
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="../../css/dashboard.css">
+
+  <style>
+    .contributions-content {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .contributions-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 22px;
+      margin: 18px 0;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    .contributions-card h2 {
+      color: #123b2a;
+      margin-top: 0;
+    }
+
+    .contribution-total {
+      font-size: 28px;
+      font-weight: 700;
+      color: #123b2a;
+      margin: 12px 0;
+      overflow-wrap: anywhere;
+    }
+
+    .contribution-note {
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .contribution-table-wrap {
+      overflow-x: auto;
+    }
+
+    .contribution-table {
+      width: 100%;
+      min-width: 520px;
+      border-collapse: collapse;
+    }
+
+    .contribution-table th,
+    .contribution-table td {
+      padding: 13px 10px;
+      text-align: left;
+      border-bottom: 1px solid #e8eee9;
+    }
+
+    .contribution-table th {
+      color: #123b2a;
+      background: #f2f7f3;
+    }
+
+    .contribution-status {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 20px;
+      background: #edf2ee;
+      color: #526458;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-confirmed {
+      background: #e0f4e7;
+      color: #176534;
+    }
+
+    .status-pending {
+      background: #fff2d5;
+      color: #805600;
+    }
+
+    .status-rejected {
+      background: #fde7e7;
+      color: #a32121;
+    }
+
+    .back-link {
+      display: inline-block;
+      color: #123b2a;
+      font-weight: 600;
+      text-decoration: none;
+      margin-bottom: 16px;
+    }
+
+    .page-message {
+      padding: 12px;
+      margin: 12px 0;
+      border-radius: 8px;
+      line-height: 1.5;
+    }
+
+    .message-error {
+      color: #922b21;
+      background: #fdecea;
+    }
+
+    .message-info {
+      color: #28543b;
+      background: #edf6ef;
+    }
+
+    .loading-row {
+      color: #666;
+      text-align: center !important;
+      padding: 24px !important;
+    }
+
+    @media (max-width: 600px) {
+      .contributions-content {
+        padding: 14px;
+      }
+
+      .contributions-card {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="dashboard-layout">
+    <aside class="dashboard-sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <h2>Chilimba Smart Save</h2>
+        <p>Learn to save. Save together. Grow together.</p>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="contributions.html" aria-current="page">
+          My Contributions
+        </a>
+        <a href="groups.html">My Groups</a>
+        <a href="transactions.html">Transactions</a>
+        <a href="settings.html">Settings</a>
+      </nav>
+
+      <button type="button" id="logout-button">Log Out</button>
+    </aside>
+
+    <main class="dashboard-main">
+      <header class="dashboard-topbar">
+        <button
+          type="button"
+          id="menu-toggle"
+          aria-label="Open navigation"
+          aria-expanded="false"
+        >☰</button>
+
+        <h1>My Contributions</h1>
+      </header>
+
+      <section class="contributions-content">
+        <a class="back-link" href="dashboard.html">
+          ← Back to Dashboard
+        </a>
+
+        <div
+          id="contributions-message"
+          role="status"
+          aria-live="polite"
+        ></div>
+
+        <section class="contributions-card">
+          <h2>Total Confirmed Contributions</h2>
+
+          <p class="contribution-total" id="total-contributions">
+            Loading...
+          </p>
+
+          <p class="contribution-note">
+            This total includes only contributions marked as confirmed
+            in the database. Pending or rejected records are not included.
+          </p>
+        </section>
+
+        <section class="contributions-card">
+          <h2>Contribution History</h2>
+
+          <p class="contribution-note">
+            View your recorded contributions, groups, dates and statuses.
+          </p>
+
+          <div class="contribution-table-wrap">
+            <table class="contribution-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Group</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+
+              <tbody id="contributions-list">
+                <tr>
+                  <td colspan="4" class="loading-row">
+                    Loading contribution records...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script type="module">
+    import { auth, db } from "../../js/firebase.js";
+
+    import {
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+    import {
+      collection,
+      doc,
+      getDoc,
+      getDocs,
+      query,
+      where
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+    const sidebar = document.getElementById("sidebar");
+    const menuToggle = document.getElementById("menu-toggle");
+    const logoutButton = document.getElementById("logout-button");
+    const message = document.getElementById("contributions-message");
+    const totalElement = document.getElementById("total-contributions");
+    const listElement = document.getElementById("contributions-list");
+
+    let loadingPage = false;
+
+    function showMessage(text, type = "info") {
+      message.textContent = text;
+      message.className =
+        "page-message " +
+        (type === "error" ? "message-error" : "message-info");
+    }
+
+    function clearMessage() {
+      message.textContent = "";
+      message.className = "";
+    }
+
+    function formatMoney(amount) {
+      return new Intl.NumberFormat("en-ZM", {
+        style: "currency",
+        currency: "ZMW",
+        minimumFractionDigits: 2
+      }).format(amount);
+    }
+
+    function formatDate(value) {
+      if (!value) return "Not recorded";
+
+      let date;
+
+      if (typeof value.toDate === "function") {
+        date = value.toDate();
+      } else if (typeof value === "string" ||
+                 typeof value === "number") {
+        date = new Date(value);
+      } else {
+        return "Not recorded";
+      }
+
+      if (Number.isNaN(date.getTime())) {
+        return "Not recorded";
+      }
+
+      return new Intl.DateTimeFormat("en-ZM", {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      }).format(date);
+    }
+
+    function dateValue(value) {
+      if (value && typeof value.toMillis === "function") {
+        return value.toMillis();
+      }
+
+      const parsed = new Date(value || 0).getTime();
+      return Number.isNaN(parsed) ? 0 : parsed;
+    }
+
+    function normalizeStatus(value) {
+      return String(value || "pending").trim().toLowerCase();
+    }
+
+    function statusLabel(value) {
+      const status = normalizeStatus(value);
+
+      if (status === "confirmed") return "Confirmed";
+      if (status === "pending") return "Pending";
+      if (status === "rejected") return "Rejected";
+
+      return status
+        .replace(/[_-]+/g, " ")
+        .replace(/\b\w/g, letter => letter.toUpperCase());
+    }
+
+    function addCell(row, value) {
+      const cell = document.createElement("td");
+      cell.textContent = value;
+      row.appendChild(cell);
+      return cell;
+    }
+
+    function renderContributions(records) {
+      listElement.replaceChildren();
+
+      if (records.length === 0) {
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+
+        cell.colSpan = 4;
+        cell.className = "loading-row";
+        cell.textContent = "No contribution records found.";
+
+        row.appendChild(cell);
+        listElement.appendChild(row);
+        return;
+      }
+
+      for (const record of records) {
+        const row = document.createElement("tr");
+
+        addCell(row, formatDate(record.createdAt));
+
+        addCell(
+          row,
+          typeof record.groupName === "string" && record.groupName.trim()
+            ? record.groupName
+            : "Group not recorded"
+        );
+
+        const amount =
+          typeof record.amount === "number" &&
+          Number.isFinite(record.amount) &&
+          record.amount >= 0
+            ? record.amount
+            : null;
+
+        addCell(
+          row,
+          amount === null ? "Unavailable" : formatMoney(amount)
+        );
+
+        const statusCell = document.createElement("td");
+        const badge = document.createElement("span");
+        const status = normalizeStatus(record.status);
+
+        badge.className = "contribution-status";
+
+        if (status === "confirmed") {
+          badge.classList.add("status-confirmed");
+        } else if (status === "pending") {
+          badge.classList.add("status-pending");
+        } else if (status === "rejected") {
+          badge.classList.add("status-rejected");
+        }
+
+        badge.textContent = statusLabel(status);
+        statusCell.appendChild(badge);
+        row.appendChild(statusCell);
+
+        listElement.appendChild(row);
+      }
+    }
+
+    async function loadContributions(user) {
+      if (loadingPage) return;
+      loadingPage = true;
+
+      totalElement.textContent = "Loading...";
+      clearMessage();
+
+      try {
+        // Check the member's own profile first.
+        const profileRef = doc(db, "users", user.uid);
+        const profileSnapshot = await getDoc(profileRef);
+
+        if (!profileSnapshot.exists()) {
+          throw new Error("Your member profile was not found.");
+        }
+
+        const profile = profileSnapshot.data();
+
+        if (profile.role !== "member" || profile.active !== true) {
+          await signOut(auth);
+          window.location.replace("../login.html");
+          return;
+        }
+
+        /*
+         * Expected Firestore structure:
+         * Collection: contributions
+         * Fields:
+         * memberUid, groupName, amount, status, createdAt
+         *
+         * memberUid must equal the signed-in user's UID.
+         */
+        const contributionsQuery = query(
+          collection(db, "contributions"),
+          where("memberUid", "==", user.uid)
+        );
+
+        const snapshot = await getDocs(contributionsQuery);
+
+        const records = snapshot.docs.map(item => ({
+          id: item.id,
+          ...item.data()
+        }));
+
+        records.sort(
+          (a, b) => dateValue(b.createdAt) - dateValue(a.createdAt)
+        );
+
+        const confirmedTotal = records.reduce((total, record) => {
+          if (
+            normalizeStatus(record.status) !== "confirmed" ||
+            typeof record.amount !== "number" ||
+            !Number.isFinite(record.amount) ||
+            record.amount < 0
+          ) {
+            return total;
+          }
+
+          return total + record.amount;
+        }, 0);
+
+        totalElement.textContent = formatMoney(confirmedTotal);
+        renderContributions(records);
+
+        if (records.length === 0) {
+          showMessage(
+            "Your account is connected, but no contribution records were found yet."
+          );
+        }
+      } catch (error) {
+        console.error("Contribution loading failed:", error);
+
+        totalElement.textContent = "Unavailable";
+
+        listElement.replaceChildren();
+
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+
+        cell.colSpan = 4;
+        cell.className = "loading-row";
+        cell.textContent = "Unable to load contribution records.";
+
+        row.appendChild(cell);
+        listElement.appendChild(row);
+
+        if (error.code === "permission-denied") {
+          showMessage(
+            "Firebase blocked access to contribution records. The Firestore security rules must be configured correctly.",
+            "error"
+          );
+        } else {
+          showMessage(
+            error.message ||
+              "Unable to load your contributions. Please try again.",
+            "error"
+          );
+        }
+      } finally {
+        loadingPage = false;
+      }
+    }
+
+    menuToggle.addEventListener("click", () => {
+      const isOpen = sidebar.classList.toggle("open");
+      menuToggle.setAttribute("aria-expanded", String(isOpen));
+    });
+
+    logoutButton.addEventListener("click", async () => {
+      logoutButton.disabled = true;
+
+      try {
+        await signOut(auth);
+        window.location.replace("../login.html");
+      } catch (error) {
+        console.error("Logout failed:", error);
+        showMessage("Unable to log out. Please try again.", "error");
+        logoutButton.disabled = false;
+      }
+    });
+
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        window.location.replace("../login.html");
+        return;
+      }
+
+      loadContributions(user);
+    });
+  </script>
+</body>
+</html>

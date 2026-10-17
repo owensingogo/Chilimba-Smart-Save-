@@ -1,0 +1,205 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123b2a">
+  <title>Accounting Reports | Chilimba Smart Save</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    body{font-family:Arial,sans-serif;background:#f7faf8;color:#17231d;margin:0}
+    main{max-width:750px;margin:25px auto;padding:16px}
+    .card{background:white;padding:20px;border-radius:12px;margin-bottom:18px;box-shadow:0 3px 12px #0000000c}
+    h1,h2{color:#123b2a}
+    label{display:block;font-weight:bold;margin:14px 0 6px}
+    input,select,textarea{box-sizing:border-box;width:100%;padding:12px;border:1px solid #ccd7d0;border-radius:7px;font-size:16px}
+    textarea{min-height:100px}
+    button{background:#123b2a;color:white;border:0;border-radius:7px;padding:12px;width:100%;margin-top:16px;font-weight:bold}
+    a{color:#123b2a}
+    .record{border-top:1px solid #ddd;padding:14px 0;overflow-wrap:anywhere}
+    #message{line-height:1.5}
+  </style>
+</head>
+<body>
+<main>
+  <p><a href="dashboard.html">← Back to dashboard</a></p>
+  <h1>Accounting Discrepancies</h1>
+
+  <section class="card">
+    <h2>Report a discrepancy</h2>
+    <p>Report missing money, incorrect balances, or differences between recorded and actual transactions.</p>
+
+    <form id="reportForm">
+      <label for="group">Select group</label>
+      <select id="group" required>
+        <option value="">Loading groups...</option>
+      </select>
+
+      <label for="title">Issue title</label>
+      <input id="title" maxlength="100" required
+        placeholder="e.g. Contribution balance mismatch">
+
+      <label for="details">Explanation</label>
+      <textarea id="details" maxlength="2000" required
+        placeholder="Explain what happened and what needs checking"></textarea>
+
+      <button id="submitButton" type="submit">Submit Report</button>
+    </form>
+    <p id="message" role="status"></p>
+  </section>
+
+  <section class="card">
+    <h2>My reports</h2>
+    <div id="reports">Loading reports...</div>
+  </section>
+</main>
+
+<script type="module">
+import {auth,db} from "../../js/firebase.js";
+import {onAuthStateChanged} from
+  "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import {
+  collection,query,where,getDocs,doc,getDoc,addDoc,serverTimestamp
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+const groupSelect=document.getElementById("group");
+const form=document.getElementById("reportForm");
+const message=document.getElementById("message");
+const reports=document.getElementById("reports");
+const submitButton=document.getElementById("submitButton");
+
+let user=null;
+let myGroups=[];
+
+function showMessage(text,error=false){
+  message.textContent=text;
+  message.style.color=error?"#a32121":"#123b2a";
+}
+
+onAuthStateChanged(auth,async currentUser=>{
+  if(!currentUser){
+    location.href="../login.html";
+    return;
+  }
+
+  user=currentUser;
+
+  try{
+    const profileSnap=await getDoc(doc(db,"users",user.uid));
+
+    if(!profileSnap.exists()||profileSnap.data().active!==true){
+      showMessage("Your account is not active.",true);
+      submitButton.disabled=true;
+      return;
+    }
+
+    const result=await getDocs(query(
+      collection(db,"groups"),
+      where("memberUids","array-contains",user.uid)
+    ));
+
+    myGroups=result.docs.map(s=>({id:s.id,...s.data()}));
+
+    groupSelect.replaceChildren(new Option("Select a group",""));
+
+    myGroups.forEach(group=>{
+      groupSelect.add(new Option(group.name,group.id));
+    });
+
+    if(!myGroups.length){
+      groupSelect.replaceChildren(new Option("No groups found",""));
+      showMessage("You must belong to a group first.",true);
+      submitButton.disabled=true;
+    }
+
+    await loadReports();
+  }catch(error){
+    console.error(error);
+    showMessage("Unable to load groups. Check your connection and Firestore rules.",true);
+    reports.textContent="Could not load reports.";
+  }
+});
+
+async function loadReports(){
+  reports.textContent="Loading...";
+
+  try{
+    const result=await getDocs(query(
+      collection(db,"discrepancies"),
+      where("reportedBy","==",user.uid)
+    ));
+
+    reports.replaceChildren();
+
+    if(result.empty){
+      reports.textContent="You have not submitted any reports.";
+      return;
+    }
+
+    result.forEach(snapshot=>{
+      const data=snapshot.data();
+      const item=document.createElement("div");
+      item.className="record";
+
+      const heading=document.createElement("strong");
+      heading.textContent=data.title||"Accounting issue";
+
+      const details=document.createElement("p");
+      details.textContent=data.details||"";
+
+      const status=document.createElement("p");
+      status.textContent="Status: "+(data.status||"Reported");
+
+      item.append(heading,details,status);
+      reports.append(item);
+    });
+  }catch(error){
+    console.error(error);
+    reports.textContent="Could not load reports.";
+  }
+}
+
+form.addEventListener("submit",async event=>{
+  event.preventDefault();
+
+  const group=myGroups.find(g=>g.id===groupSelect.value);
+  const title=document.getElementById("title").value.trim();
+  const details=document.getElementById("details").value.trim();
+
+  if(!group||!title||!details){
+    showMessage("Complete all fields before submitting.",true);
+    return;
+  }
+
+  if(group.accountantUid!==user.uid){
+    showMessage("Only the group's appointed accountant can submit a discrepancy report.",true);
+    return;
+  }
+
+  submitButton.disabled=true;
+  showMessage("Submitting report...");
+
+  try{
+    await addDoc(collection(db,"discrepancies"),{
+      groupId:group.id,
+      title,
+      details,
+      reportedBy:user.uid,
+      status:"reported",
+      createdAt:serverTimestamp()
+    });
+
+    form.reset();
+    showMessage("Report submitted successfully.");
+    await loadReports();
+  }catch(error){
+    console.error(error);
+    showMessage("Report was not saved. Check the Firestore rules and your permissions.",true);
+  }finally{
+    submitButton.disabled=false;
+  }
+});
+</script>
+</body>
+</html>

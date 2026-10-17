@@ -1,0 +1,199 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123b2a">
+  <title>Group Loans | Chilimba Smart Save</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    body{font-family:Arial,sans-serif;background:#f7faf8;color:#17231d;margin:0}
+    main{max-width:750px;margin:25px auto;padding:16px}
+    .card{background:white;padding:20px;border-radius:12px;margin-bottom:16px;box-shadow:0 3px 12px #0000000c}
+    h1,h2{color:#123b2a}
+    label{display:block;font-weight:bold;margin:13px 0 6px}
+    input,select,textarea{box-sizing:border-box;width:100%;padding:12px;border:1px solid #ccd7d0;border-radius:7px;font-size:16px}
+    button{background:#123b2a;color:white;border:0;border-radius:7px;padding:12px;width:100%;margin-top:16px;font-weight:bold}
+    a{color:#123b2a}
+    .item{border-top:1px solid #e1e8e3;padding:12px 0;overflow-wrap:anywhere}
+    .notice{background:#edf7f0;padding:12px;border-radius:8px}
+  </style>
+</head>
+<body>
+<main>
+  <p><a href="dashboard.html">← Back to dashboard</a></p>
+  <h1>Group Loans</h1>
+
+  <section class="card">
+    <h2>Apply for a loan</h2>
+    <p class="notice">Loan applications are subject to your group's loan rules and approval process.</p>
+
+    <form id="loanForm">
+      <label for="group">Select group</label>
+      <select id="group" required>
+        <option value="">Loading your groups...</option>
+      </select>
+
+      <label for="amount">Loan amount (ZMW)</label>
+      <input id="amount" type="number" min="1" step="0.01" required>
+
+      <label for="reason">Reason for loan</label>
+      <textarea id="reason" maxlength="500" required></textarea>
+
+      <label for="dueDate">Expected repayment date</label>
+      <input id="dueDate" type="date" required>
+
+      <button id="applyButton" type="submit">Submit Application</button>
+    </form>
+    <p id="message" role="status"></p>
+  </section>
+
+  <section class="card">
+    <h2>Loan records</h2>
+    <div id="records">Loading loan records...</div>
+  </section>
+</main>
+
+<script type="module">
+import {auth,db} from "../../js/firebase.js";
+import {onAuthStateChanged} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import {
+  collection,query,where,getDocs,doc,getDoc,
+  addDoc,serverTimestamp
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+const groupSelect=document.getElementById("group");
+const form=document.getElementById("loanForm");
+const message=document.getElementById("message");
+const records=document.getElementById("records");
+const applyButton=document.getElementById("applyButton");
+
+let user=null;
+let groups=[];
+
+function say(text){message.textContent=text;}
+
+onAuthStateChanged(auth,async current=>{
+  if(!current){location.href="../login.html";return;}
+  user=current;
+
+  try{
+    const profile=await getDoc(doc(db,"users",user.uid));
+    if(!profile.exists()||profile.data().active!==true){
+      say("Your account is not active.");
+      applyButton.disabled=true;
+      return;
+    }
+
+    const result=await getDocs(query(
+      collection(db,"groups"),
+      where("memberUids","array-contains",user.uid)
+    ));
+
+    groups=result.docs.map(d=>({id:d.id,...d.data()}));
+
+    groupSelect.replaceChildren(new Option("Choose a group",""));
+    groups.forEach(g=>groupSelect.add(new Option(g.name,g.id)));
+
+    if(!groups.length){
+      groupSelect.replaceChildren(new Option("No groups found",""));
+      say("Join a group before applying for a loan.");
+      applyButton.disabled=true;
+    }
+
+    await loadRecords();
+  }catch(e){
+    console.error(e);
+    say("Could not load your groups. Check your connection and Firestore rules.");
+    records.textContent="Unable to load loan records.";
+  }
+});
+
+async function loadRecords(){
+  records.textContent="Loading...";
+  try{
+    const result=await getDocs(query(
+      collection(db,"loans"),
+      where("borrowerUid","==",user.uid)
+    ));
+
+    records.replaceChildren();
+
+    if(result.empty){
+      records.textContent="No loan records found.";
+      return;
+    }
+
+    result.forEach(snap=>{
+      const loan=snap.data();
+      const item=document.createElement("div");
+      item.className="item";
+
+      const title=document.createElement("strong");
+      title.textContent="Loan: K"+Number(loan.amount||0).toFixed(2);
+
+      const details=document.createElement("p");
+      details.textContent=
+        "Status: "+(loan.status||"Not specified")+
+        " | Repaid: K"+Number(loan.amountRepaid||0).toFixed(2)+
+        " | Outstanding: K"+Math.max(
+          0,Number(loan.amount||0)-Number(loan.amountRepaid||0)
+        ).toFixed(2);
+
+      item.append(title,details);
+      records.append(item);
+    });
+  }catch(e){
+    console.error(e);
+    records.textContent="Loan records could not be loaded.";
+  }
+}
+
+form.addEventListener("submit",async e=>{
+  e.preventDefault();
+
+  const group=groups.find(g=>g.id===groupSelect.value);
+  const amount=Number(document.getElementById("amount").value);
+  const reason=document.getElementById("reason").value.trim();
+  const dueDate=document.getElementById("dueDate").value;
+
+  if(!group||!Number.isFinite(amount)||amount<=0||!reason||!dueDate){
+    say("Please complete all fields correctly.");
+    return;
+  }
+
+  if(dueDate<new Date().toISOString().slice(0,10)){
+    say("The repayment date must be today or later.");
+    return;
+  }
+
+  say("Submitting application...");
+  applyButton.disabled=true;
+
+  try{
+    // Requires matching Firestore rules before this write can succeed.
+    await addDoc(collection(db,"loanApplications"),{
+      groupId:group.id,
+      groupName:group.name,
+      borrowerUid:user.uid,
+      borrowerName:user.displayName||"",
+      amount,
+      reason,
+      expectedRepaymentDate:dueDate,
+      status:"pending",
+      createdAt:serverTimestamp()
+    });
+
+    form.reset();
+    say("Loan application submitted for review.");
+  }catch(error){
+    console.error(error);
+    say("Application not saved. Firestore rules must explicitly allow secure loan applications.");
+  }finally{
+    applyButton.disabled=false;
+  }
+});
+</script>
+</body>
+</html>

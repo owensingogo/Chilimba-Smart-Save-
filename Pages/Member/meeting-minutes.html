@@ -1,0 +1,214 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#123b2a">
+<title>Meeting Minutes | Chilimba Smart Save</title>
+<link rel="stylesheet" href="../../css/style.css">
+<style>
+body{font-family:Arial,sans-serif;background:#f7faf8;color:#17231d;margin:0}
+main{max-width:750px;margin:25px auto;padding:16px}
+.card{background:white;padding:20px;border-radius:12px;margin-bottom:18px;box-shadow:0 3px 12px #0000000c}
+h1,h2{color:#123b2a}
+label{display:block;font-weight:bold;margin:14px 0 6px}
+input,select,textarea{box-sizing:border-box;width:100%;padding:12px;border:1px solid #ccd7d0;border-radius:7px;font-size:16px}
+textarea{min-height:130px}
+button{background:#123b2a;color:white;border:0;border-radius:7px;padding:12px;width:100%;margin-top:15px;font-weight:bold}
+a{color:#123b2a}
+.record{border-bottom:1px solid #e1e8e3;padding:14px 0;overflow-wrap:anywhere}
+small{color:#5b6b61}
+</style>
+</head>
+<body>
+<main>
+<p><a href="dashboard.html">← Back to dashboard</a></p>
+<h1>Meeting Minutes</h1>
+
+<section class="card">
+<h2>Record a meeting</h2>
+<p>The group owner or appointed secretary can save meeting minutes for members to read.</p>
+
+<form id="minutesForm">
+<label for="group">Select group</label>
+<select id="group" required>
+<option value="">Loading groups...</option>
+</select>
+
+<label for="meetingDate">Meeting date</label>
+<input id="meetingDate" type="date" required>
+
+<label for="title">Meeting title</label>
+<input id="title" maxlength="120" required placeholder="e.g. October group meeting">
+
+<label for="body">Minutes and decisions</label>
+<textarea id="body" maxlength="10000" required placeholder="Record discussions, decisions and action points"></textarea>
+
+<button id="saveButton" type="submit">Save Meeting Minutes</button>
+<p id="message" role="status"></p>
+</form>
+</section>
+
+<section class="card">
+<h2>Saved minutes</h2>
+<label for="filterGroup">Choose group</label>
+<select id="filterGroup">
+<option value="">Select a group</option>
+</select>
+<div id="records">Select a group to view its meeting minutes.</div>
+</section>
+</main>
+
+<script type="module">
+import {auth,db} from "../../js/firebase.js";
+import {onAuthStateChanged} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import {
+ collection,query,where,getDocs,doc,getDoc,addDoc,serverTimestamp
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+const form=document.getElementById("minutesForm");
+const groupInput=document.getElementById("group");
+const filterInput=document.getElementById("filterGroup");
+const records=document.getElementById("records");
+const message=document.getElementById("message");
+const saveButton=document.getElementById("saveButton");
+
+let user=null;
+let groups=[];
+
+function say(text){message.textContent=text;}
+
+onAuthStateChanged(auth,async current=>{
+ if(!current){location.href="../login.html";return;}
+ user=current;
+
+ try{
+  const profile=await getDoc(doc(db,"users",user.uid));
+  if(!profile.exists()||profile.data().active!==true){
+   say("Your account is not active.");
+   saveButton.disabled=true;
+   return;
+  }
+
+  const result=await getDocs(query(
+   collection(db,"groups"),
+   where("memberUids","array-contains",user.uid)
+  ));
+
+  groups=result.docs.map(s=>({id:s.id,...s.data()}));
+  groupInput.replaceChildren(new Option("Select a group",""));
+  filterInput.replaceChildren(new Option("Select a group",""));
+
+  groups.forEach(g=>{
+   groupInput.add(new Option(g.name,g.id));
+   filterInput.add(new Option(g.name,g.id));
+  });
+
+  if(!groups.length){
+   say("Join a group before recording meeting minutes.");
+   saveButton.disabled=true;
+  }
+ }catch(e){
+  console.error(e);
+  say("Unable to load groups. Check your connection and Firestore rules.");
+ }
+});
+
+filterInput.addEventListener("change",loadMinutes);
+
+async function loadMinutes(){
+ const groupId=filterInput.value;
+ records.replaceChildren();
+
+ if(!groupId){
+  records.textContent="Select a group to view its meeting minutes.";
+  return;
+ }
+
+ records.textContent="Loading minutes...";
+
+ try{
+  const result=await getDocs(query(
+   collection(db,"meetingMinutes"),
+   where("groupId","==",groupId)
+  ));
+
+  records.replaceChildren();
+
+  if(result.empty){
+   records.textContent="No meeting minutes have been recorded.";
+   return;
+  }
+
+  const items=result.docs.map(s=>s.data());
+  items.sort((a,b)=>(b.meetingDate||"").localeCompare(a.meetingDate||""));
+
+  items.forEach(m=>{
+   const article=document.createElement("article");
+   article.className="record";
+
+   const heading=document.createElement("h3");
+   heading.textContent=m.title||"Meeting";
+
+   const date=document.createElement("small");
+   date.textContent="Meeting date: "+(m.meetingDate||"Not specified");
+
+   const body=document.createElement("p");
+   body.style.whiteSpace="pre-wrap";
+   body.textContent=m.body||"";
+
+   article.append(heading,date,body);
+   records.append(article);
+  });
+ }catch(e){
+  console.error(e);
+  records.textContent="Could not load minutes. Check your Firestore rules.";
+ }
+}
+
+form.addEventListener("submit",async event=>{
+ event.preventDefault();
+
+ const group=groups.find(g=>g.id===groupInput.value);
+ const meetingDate=document.getElementById("meetingDate").value;
+ const title=document.getElementById("title").value.trim();
+ const body=document.getElementById("body").value.trim();
+
+ if(!group||!meetingDate||!title||!body){
+  say("Complete all fields.");
+  return;
+ }
+
+ if(group.ownerUid!==user.uid&&group.secretaryUid!==user.uid){
+  say("Only the group owner or appointed secretary can record meeting minutes.");
+  return;
+ }
+
+ saveButton.disabled=true;
+ say("Saving meeting minutes...");
+
+ try{
+  await addDoc(collection(db,"meetingMinutes"),{
+   groupId:group.id,
+   meetingDate,
+   title,
+   body,
+   createdBy:user.uid,
+   createdAt:serverTimestamp()
+  });
+
+  form.reset();
+  say("Meeting minutes saved successfully.");
+  filterInput.value=group.id;
+  await loadMinutes();
+ }catch(e){
+  console.error(e);
+  say("Could not save. Check your internet connection and Firestore rules.");
+ }finally{
+  saveButton.disabled=false;
+ }
+});
+</script>
+</body>
+</html>

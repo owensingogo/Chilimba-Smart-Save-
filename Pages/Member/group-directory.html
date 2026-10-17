@@ -1,0 +1,177 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#123b2a">
+<title>Group Members | Chilimba Smart Save</title>
+<link rel="stylesheet" href="../../css/style.css">
+<style>
+body{font-family:Arial,sans-serif;background:#f7faf8;color:#17231d;margin:0}
+main{max-width:850px;margin:25px auto;padding:16px}
+.card{background:#fff;padding:20px;border-radius:12px;margin-bottom:18px;box-shadow:0 3px 12px #0000000c}
+h1,h2{color:#123b2a}
+label{display:block;font-weight:bold;margin:12px 0 6px}
+select,input{box-sizing:border-box;width:100%;padding:12px;border:1px solid #ccd7d0;border-radius:7px;font-size:16px}
+a{color:#123b2a}
+.member{border-bottom:1px solid #e1e8e3;padding:15px 0;overflow-wrap:anywhere}
+.member:last-child{border-bottom:0}
+.role{display:inline-block;background:#edf7f0;padding:5px 9px;border-radius:15px;font-size:13px}
+.muted{color:#5b6b61;font-size:14px}
+</style>
+</head>
+<body>
+<main>
+<p><a href="dashboard.html">← Back to dashboard</a></p>
+<h1>Group Directory</h1>
+<p>View the members of your savings groups.</p>
+
+<section class="card">
+<label for="group">Select group</label>
+<select id="group">
+<option value="">Loading groups...</option>
+</select>
+<label for="search">Search members</label>
+<input id="search" type="search" placeholder="Search by name, place or phone">
+<p id="status" role="status"></p>
+</section>
+
+<section class="card">
+<h2 id="groupTitle">Group Members</h2>
+<div id="members">Loading members...</div>
+</section>
+</main>
+
+<script type="module">
+import {auth,db} from "../../js/firebase.js";
+import {onAuthStateChanged} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import {
+ collection,query,where,getDocs,doc,getDoc
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+const groupSelect=document.getElementById("group");
+const searchInput=document.getElementById("search");
+const membersOutput=document.getElementById("members");
+const groupTitle=document.getElementById("groupTitle");
+const status=document.getElementById("status");
+
+let user=null;
+let groups=[];
+let currentMembers=[];
+
+onAuthStateChanged(auth,async current=>{
+ if(!current){location.href="../login.html";return;}
+ user=current;
+
+ try{
+  const profile=await getDoc(doc(db,"users",user.uid));
+  if(!profile.exists()||profile.data().active!==true){
+   status.textContent="Your account is not active.";
+   membersOutput.textContent="Access unavailable.";
+   return;
+  }
+
+  const result=await getDocs(query(
+   collection(db,"groups"),
+   where("memberUids","array-contains",user.uid)
+  ));
+
+  groups=result.docs.map(s=>({id:s.id,...s.data()}));
+
+  groupSelect.replaceChildren(new Option("Select a group",""));
+  groups.forEach(g=>groupSelect.add(new Option(g.name,g.id)));
+
+  if(!groups.length){
+   status.textContent="You have not joined any groups yet.";
+   membersOutput.textContent="No group members to display.";
+  }
+ }catch(e){
+  console.error(e);
+  status.textContent="Could not load groups. Check your connection and Firestore rules.";
+  membersOutput.textContent="Unable to load directory.";
+ }
+});
+
+groupSelect.addEventListener("change",loadMembers);
+searchInput.addEventListener("input",renderMembers);
+
+async function loadMembers(){
+ const group=groups.find(g=>g.id===groupSelect.value);
+ currentMembers=[];
+ searchInput.value="";
+
+ if(!group){
+  groupTitle.textContent="Group Members";
+  membersOutput.textContent="Select a group to view its members.";
+  return;
+ }
+
+ groupTitle.textContent=group.name+" Members";
+ membersOutput.textContent="Loading members...";
+
+ try{
+  const results=await Promise.all(
+   (group.memberUids||[]).map(async uid=>{
+    const snap=await getDoc(doc(db,"users",uid));
+    if(!snap.exists())return null;
+    return {uid,...snap.data()};
+   })
+  );
+
+  currentMembers=results.filter(Boolean);
+  status.textContent=currentMembers.length+" member profile(s) loaded.";
+  renderMembers();
+ }catch(e){
+  console.error(e);
+  membersOutput.textContent="Member details could not be loaded. Check your Firestore rules.";
+ }
+}
+
+function renderMembers(){
+ const term=searchInput.value.trim().toLowerCase();
+ membersOutput.replaceChildren();
+
+ const group=groups.find(g=>g.id===groupSelect.value);
+ if(!group)return;
+
+ const filtered=currentMembers.filter(m=>
+  [m.fullName,m.phone,m.place,m.location]
+   .some(value=>String(value||"").toLowerCase().includes(term))
+ );
+
+ if(!filtered.length){
+  membersOutput.textContent="No matching members found.";
+  return;
+ }
+
+ filtered.forEach(m=>{
+  const item=document.createElement("article");
+  item.className="member";
+
+  const name=document.createElement("h3");
+  name.textContent=m.fullName||"Member";
+
+  const role=document.createElement("span");
+  role.className="role";
+
+  let groupRole="Member";
+  if(m.uid===group.ownerUid)groupRole="Group Owner";
+  else if(m.uid===group.secretaryUid)groupRole="Secretary";
+  else if(m.uid===group.accountantUid)groupRole="Financial Treasurer";
+
+  role.textContent=groupRole;
+
+  const phone=document.createElement("p");
+  phone.textContent="Phone: "+(m.phone||"Not provided");
+
+  const place=document.createElement("p");
+  place.textContent="Place: "+(m.place||m.location||"Not provided");
+
+  item.append(name,role,phone,place);
+  membersOutput.append(item);
+ });
+}
+</script>
+</body>
+</html>

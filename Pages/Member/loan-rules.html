@@ -1,0 +1,234 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#123b2a">
+<title>Loan Rules | Chilimba Smart Save</title>
+<link rel="stylesheet" href="../../css/style.css">
+<style>
+body{font-family:Arial,sans-serif;background:#f7faf8;color:#17231d;margin:0}
+main{max-width:760px;margin:25px auto;padding:16px}
+.card{background:white;padding:20px;border-radius:12px;margin-bottom:18px;box-shadow:0 3px 12px #0000000c}
+h1,h2{color:#123b2a}
+label{display:block;font-weight:bold;margin:14px 0 6px}
+input,select,textarea{box-sizing:border-box;width:100%;padding:12px;border:1px solid #ccd7d0;border-radius:7px;font-size:16px}
+button{background:#123b2a;color:white;border:0;border-radius:7px;padding:12px;width:100%;margin-top:16px;font-weight:bold}
+a{color:#123b2a}
+.rule{border-bottom:1px solid #e1e8e3;padding:14px 0}
+#message{line-height:1.5}
+</style>
+</head>
+<body>
+<main>
+<p><a href="dashboard.html">← Back to dashboard</a></p>
+<h1>Loan Rules & Fees</h1>
+
+<section class="card">
+<h2>Propose loan rules</h2>
+<p>The group can discuss and vote on loan conditions before they are adopted.</p>
+
+<form id="rulesForm">
+<label for="group">Select group</label>
+<select id="group" required>
+<option value="">Loading groups...</option>
+</select>
+
+<label for="interest">Loan fee policy</label>
+<select id="interest" required>
+<option value="interest-free">Interest-free loans</option>
+<option value="fixed-fee">Fixed approved fee</option>
+<option value="percentage-fee">Percentage fee</option>
+</select>
+
+<label for="fee">Fee amount (ZMW or percentage)</label>
+<input id="fee" type="number" min="0" step="0.01" value="0" required>
+
+<label for="limit">Amount requiring a group vote (ZMW)</label>
+<input id="limit" type="number" min="0" step="0.01" required>
+
+<label for="emergency">Emergency assistance policy</label>
+<select id="emergency" required>
+<option value="separate-review">Review each emergency request</option>
+<option value="repayable">Emergency assistance must be repaid</option>
+<option value="non-repayable">Emergency assistance may be non-repayable</option>
+</select>
+
+<label for="notes">Additional conditions</label>
+<textarea id="notes" maxlength="2000" placeholder="Add repayment periods or other conditions"></textarea>
+
+<button id="submitButton" type="submit">Submit Proposal</button>
+<p id="message" role="status"></p>
+</form>
+</section>
+
+<section class="card">
+<h2>Saved proposals</h2>
+<div id="proposals">Select a group to view proposals.</div>
+</section>
+</main>
+
+<script type="module">
+import {auth,db} from "../../js/firebase.js";
+import {onAuthStateChanged} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import {
+ collection,query,where,getDocs,doc,getDoc,addDoc,serverTimestamp
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+const groupInput=document.getElementById("group");
+const form=document.getElementById("rulesForm");
+const message=document.getElementById("message");
+const proposals=document.getElementById("proposals");
+const submitButton=document.getElementById("submitButton");
+
+let user=null;
+let groups=[];
+
+function say(t){message.textContent=t;}
+
+onAuthStateChanged(auth,async current=>{
+ if(!current){location.href="../login.html";return;}
+ user=current;
+
+ try{
+  const profile=await getDoc(doc(db,"users",user.uid));
+  if(!profile.exists()||profile.data().active!==true){
+   say("Your account is not active.");
+   submitButton.disabled=true;
+   return;
+  }
+
+  const result=await getDocs(query(
+   collection(db,"groups"),
+   where("memberUids","array-contains",user.uid)
+  ));
+
+  groups=result.docs.map(s=>({id:s.id,...s.data()}));
+  groupInput.replaceChildren(new Option("Select a group",""));
+  groups.forEach(g=>groupInput.add(new Option(g.name,g.id)));
+
+  if(!groups.length){
+   say("Join a group first.");
+   submitButton.disabled=true;
+  }
+ }catch(e){
+  console.error(e);
+  say("Could not load groups. Check your connection and Firestore rules.");
+ }
+});
+
+groupInput.addEventListener("change",loadProposals);
+
+async function loadProposals(){
+ const groupId=groupInput.value;
+ proposals.replaceChildren();
+
+ if(!groupId){
+  proposals.textContent="Select a group to view proposals.";
+  return;
+ }
+
+ proposals.textContent="Loading...";
+
+ try{
+  const result=await getDocs(query(
+   collection(db,"loanRuleProposals"),
+   where("groupId","==",groupId)
+  ));
+
+  proposals.replaceChildren();
+
+  if(result.empty){
+   proposals.textContent="No proposals have been submitted.";
+   return;
+  }
+
+  result.forEach(s=>{
+   const d=s.data();
+   const item=document.createElement("div");
+   item.className="rule";
+
+   const title=document.createElement("strong");
+   title.textContent=d.feePolicy==="interest-free"
+    ?"Interest-free loans"
+    :"Loan fee policy: "+(d.feePolicy||"Not specified");
+
+   const detail=document.createElement("p");
+   detail.textContent=
+    "Fee: "+Number(d.feeAmount||0)+
+    (d.feePolicy==="percentage-fee"?"%":" ZMW")+
+    " | Group vote threshold: K"+Number(d.groupVoteThreshold||0);
+
+   const emergency=document.createElement("p");
+   emergency.textContent="Emergency policy: "+(d.emergencyPolicy||"Not specified");
+
+   const status=document.createElement("p");
+   status.textContent="Status: "+(d.status||"pending");
+
+   item.append(title,detail,emergency,status);
+
+   if(d.notes){
+    const notes=document.createElement("p");
+    notes.textContent="Conditions: "+d.notes;
+    item.append(notes);
+   }
+
+   proposals.append(item);
+  });
+ }catch(e){
+  console.error(e);
+  proposals.textContent="Could not load proposals. Firestore rules may need updating.";
+ }
+}
+
+form.addEventListener("submit",async event=>{
+ event.preventDefault();
+
+ const group=groups.find(g=>g.id===groupInput.value);
+ const feePolicy=document.getElementById("interest").value;
+ const feeAmount=Number(document.getElementById("fee").value);
+ const groupVoteThreshold=Number(document.getElementById("limit").value);
+ const emergencyPolicy=document.getElementById("emergency").value;
+ const notes=document.getElementById("notes").value.trim();
+
+ if(!group||!Number.isFinite(feeAmount)||feeAmount<0||
+    !Number.isFinite(groupVoteThreshold)||groupVoteThreshold<0){
+  say("Please enter valid values.");
+  return;
+ }
+
+ if(feePolicy==="interest-free"&&feeAmount!==0){
+  say("Interest-free loans must have a fee of zero.");
+  return;
+ }
+
+ submitButton.disabled=true;
+ say("Submitting proposal...");
+
+ try{
+  await addDoc(collection(db,"loanRuleProposals"),{
+   groupId:group.id,
+   proposedBy:user.uid,
+   feePolicy,
+   feeAmount,
+   groupVoteThreshold,
+   emergencyPolicy,
+   notes,
+   status:"pending",
+   createdAt:serverTimestamp()
+  });
+
+  form.reset();
+  say("Proposal submitted. It is not active until approved through your group's agreed process.");
+  await loadProposals();
+ }catch(e){
+  console.error(e);
+  say("Proposal not saved. The loanRuleProposals collection needs matching Firestore rules.");
+ }finally{
+  submitButton.disabled=false;
+ }
+});
+</script>
+</body>
+</html>

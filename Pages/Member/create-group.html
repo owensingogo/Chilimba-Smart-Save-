@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#123b2a">
+
+  <title>Create Group | Chilimba Smart Save</title>
+
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="../../css/dashboard.css">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      background: #123b2a !important;
+      color: #17231d;
+      font-family: Arial, sans-serif;
+    }
+
+    .create-wrap {
+      width: min(100% - 28px, 720px);
+      margin: 0 auto;
+      padding: 25px 0 35px;
+      flex: 1;
+    }
+
+    .back-link {
+      color: #ffffff;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+
+    .create-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 5px 24px rgba(0, 0, 0, .12);
+    }
+
+    .create-card h1,
+    .create-card h2 {
+      color: #123b2a;
+    }
+
+    .create-card h1 {
+      margin-top: 0;
+      line-height: 1.3;
+    }
+
+    .create-card p {
+      line-height: 1.6;
+    }
+
+    .create-card label.field-label {
+      display: block;
+      margin: 16px 0 7px;
+      font-weight: 600;
+      color: #17231d;
+    }
+
+    .create-card input:not([type="checkbox"]),
+    .create-card textarea,
+    .create-card select {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px;
+      border: 1px solid #ccd7d0;
+      border-radius: 8px;
+      font: inherit;
+      background: #ffffff;
+      color: #17231d;
+    }
+
+    .create-card input:focus,
+    .create-card textarea:focus,
+    .create-card select:focus {
+      outline: 2px solid #256b4a;
+      outline-offset: 1px;
+      border-color: #256b4a;
+    }
+
+    .create-card textarea {
+      min-height: 85px;
+      resize: vertical;
+    }
+
+    /* Create button */
+    .create-card button {
+      width: 100%;
+      margin-top: 22px;
+      padding: 14px;
+      border: 0;
+      border-radius: 8px;
+      background: #123b2a;
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      opacity: 1;
+      transition: background .2s, transform .2s;
+    }
+
+    .create-card button:hover:not(:disabled) {
+      background: #256b4a;
+    }
+
+    .create-card button:active:not(:disabled) {
+      transform: scale(.99);
+    }
+
+    .create-card button:disabled {
+      background: #aab5ae;
+      color: #ffffff;
+      opacity: .65;
+      cursor: not-allowed;
+    }
+
+    .notice {
+      padding: 12px;
+      border-radius: 8px;
+      background: #edf7f0;
+      color: #123b2a;
+      margin: 15px 0;
+      line-height: 1.5;
+    }
+
+    .rules-box {
+      margin-top: 24px;
+      padding: 16px;
+      border: 1px solid #d4e2d8;
+      border-radius: 10px;
+      background: #f8fbf9;
+    }
+
+    .rules-box h2 {
+      margin-top: 0;
+      font-size: 19px;
+    }
+
+    .rules-box ol {
+      padding-left: 22px;
+      line-height: 1.65;
+    }
+
+    .agreement {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-top: 18px;
+      line-height: 1.5;
+    }
+
+    .agreement input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      flex: 0 0 18px;
+      margin-top: 3px;
+      accent-color: #123b2a;
+    }
+
+    .agreement label {
+      margin: 0;
+      font-weight: 500;
+      color: #17231d;
+    }
+
+    #message {
+      overflow-wrap: anywhere;
+      line-height: 1.6;
+    }
+
+    #message p {
+      margin: 10px 0;
+    }
+
+    #message a {
+      color: #123b2a;
+      font-weight: 700;
+    }
+
+    #message .copy-code-button {
+      width: 100%;
+      margin-top: 12px;
+      background: #256b4a;
+    }
+
+    /* Footer branding */
+    .site-footer {
+      width: 100%;
+      margin-top: auto;
+      padding: 22px 14px;
+      background: #0b291d;
+      border-top: 1px solid rgba(255, 255, 255, .2);
+      color: #ffffff;
+      text-align: center;
+    }
+
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      margin-bottom: 9px;
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    /* Zambia flag */
+    .flag-zambia {
+      position: relative;
+      display: inline-block;
+      width: 32px;
+      height: 21px;
+      flex-shrink: 0;
+      overflow: hidden;
+      border-radius: 2px;
+      background: #198a45;
+      box-shadow: 0 2px 5px #0003;
+    }
+
+    .flag-zambia::before {
+      content: "";
+      position: absolute;
+      right: 3px;
+      bottom: 0;
+      width: 5px;
+      height: 11px;
+      background: #de3030;
+      box-shadow: -5px 0 #ef8b22, -10px 0 #111111;
+    }
+
+    /* Chilimba brand emblem */
+    .flag-chilimba {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 21px;
+      flex-shrink: 0;
+      border: 1px solid rgba(255, 255, 255, .5);
+      border-radius: 3px;
+      background: #ffffff;
+      color: #123b2a;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: -1px;
+    }
+
+    .site-footer p {
+      margin: 5px 0;
+      color: #ffffff;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .site-footer .footer-tagline {
+      font-weight: 700;
+    }
+
+    @media (max-width: 480px) {
+      .create-wrap {
+        width: calc(100% - 20px);
+        padding-top: 18px;
+      }
+
+      .create-card {
+        padding: 18px 14px;
+      }
+
+      .create-card h1 {
+        font-size: 24px;
+      }
+
+      .rules-box {
+        padding: 13px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="create-wrap">
+
+    <p>
+      <a class="back-link" href="dashboard.html">
+        ← Back to dashboard
+      </a>
+    </p>
+
+    <section class="create-card">
+
+      <h1>Create a Chilimba Group</h1>
+
+      <p>
+        Set up your group, agree on contribution arrangements and provide
+        the group's mobile money account details.
+      </p>
+
+      <div class="notice">
+        <strong>30-day free trial:</strong>
+        Each group receives its own trial. The platform subscription is
+        separate from group savings. Group information is intended to remain
+        stored when the trial expires, subject to the platform's data policies.
+      </div>
+
+      <div id="message" role="status" aria-live="polite"></div>
+
+      <form id="createGroupForm">
+
+        <label class="field-label" for="groupName">
+          Group name
+        </label>
+
+        <input
+          id="groupName"
+          name="groupName"
+          type="text"
+          maxlength="80"
+          placeholder="e.g. Unity Savings Group"
+          required
+        >
+
+        <label class="field-label" for="description">
+          Group description (optional)
+        </label>
+
+        <textarea
+          id="description"
+          name="description"
+          maxlength="500"
+          placeholder="Briefly describe your group"
+        ></textarea>
+
+        <label class="field-label" for="frequency">
+          Contribution frequency
+        </label>
+
+        <select id="frequency" name="frequency" required>
+          <option value="">Select frequency</option>
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="every-3-days">Every 3 days</option>
+          <option value="monthly">Monthly</option>
+          <option value="custom">Custom arrangement</option>
+        </select>
+
+        <label class="field-label" for="minimumContribution">
+          Minimum contribution (ZMW)
+        </label>
+
+        <input
+          id="minimumContribution"
+          name="minimumContribution"
+          type="number"
+          min="1"
+          step="0.01"
+          placeholder="e.g. 50"
+          required
+        >
+
+        <label class="field-label" for="provider">
+          Group mobile money provider
+        </label>
+
+        <select id="provider" name="provider" required>
+          <option value="">Select provider</option>
+          <option value="MTN">MTN Mobile Money</option>
+          <option value="Airtel">Airtel Money</option>
+          <option value="Zamtel">Zamtel Money</option>
+        </select>
+
+        <label class="field-label" for="accountName">
+          Account holder's name
+        </label>
+
+        <input
+          id="accountName"
+          name="accountName"
+          type="text"
+          maxlength="100"
+          placeholder="Enter account holder's name"
+          required
+        >
+
+        <label class="field-label" for="accountPhone">
+          Mobile money phone number
+        </label>
+
+        <input
+          id="accountPhone"
+          name="accountPhone"
+          type="tel"
+          maxlength="20"
+          placeholder="e.g. 097XXXXXXX"
+          required
+        >
+
+        <section class="rules-box" aria-labelledby="rulesHeading">
+
+          <h2 id="rulesHeading">Group Creation Rules</h2>
+
+          <p>
+            Read these rules before creating your Chilimba group.
+            By agreeing, you confirm that you will help manage the group
+            responsibly.
+          </p>
+
+          <ol>
+            <li>
+              <strong>Honest information:</strong>
+              Provide accurate group details and use your account responsibly.
+            </li>
+
+            <li>
+              <strong>Clear contributions:</strong>
+              Make sure members understand the contribution amount and
+              frequency agreed by the group.
+            </li>
+
+            <li>
+              <strong>Group payment account:</strong>
+              Enter the correct mobile money details intended for group
+              transactions. Explain any account changes to members and follow
+              the group's approval process.
+            </li>
+
+            <li>
+              <strong>Accurate records:</strong>
+              Contributions, payments, loans and repayments must be recorded
+              honestly. Do not falsify records or make unauthorised changes.
+            </li>
+
+            <li>
+              <strong>Loans and assistance:</strong>
+              Follow the group's agreed procedures for loan approvals,
+              repayment dates, fees and emergency assistance.
+            </li>
+
+            <li>
+              <strong>Responsible leadership:</strong>
+              Do not misuse group funds or use your position to unfairly
+              benefit yourself or another person.
+            </li>
+
+            <li>
+              <strong>Member privacy:</strong>
+              Use members' personal information only for legitimate group
+              purposes. Do not share it outside the group without permission
+              or another lawful basis.
+            </li>
+
+            <li>
+              <strong>Invitation codes:</strong>
+              Share the group invitation code responsibly. Group membership
+              must follow the platform's joining and approval process.
+            </li>
+
+            <li>
+              <strong>Subscription:</strong>
+              The 30-day trial and any later platform subscription are separate
+              from the group's savings. Subscription charges do not become
+              group contributions.
+            </li>
+
+            <li>
+              <strong>Member agreement:</strong>
+              Group members should agree on how contributions, payouts,
+              disputes and other group decisions will be handled.
+            </li>
+          </ol>
+
+          <div class="agreement">
+
+            <input
+              id="agreeRules"
+              name="agreeRules"
+              type="checkbox"
+              required
+            >
+
+            <label for="agreeRules">
+              I have read and agree to the Group Creation Rules. I will manage
+              this group honestly and follow its agreed procedures.
+            </label>
+
+          </div>
+
+        </section>
+
+        <button id="createButton" type="submit" disabled>
+          Create Group
+        </button>
+
+      </form>
+
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+
+    <div class="footer-brand">
+
+      <span
+        class="flag-zambia"
+        role="img"
+        aria-label="Zambian flag"
+      ></span>
+
+      <span
+        class="flag-chilimba"
+        role="img"
+        aria-label="Chilimba Smart Save emblem"
+      >CSS</span>
+
+      <span>Chilimba Smart Save</span>
+
+    </div>
+
+    <p class="footer-tagline">
+      Proudly Zambian 🇿🇲
+    </p>
+
+    <p>Saving together. Growing together.</p>
+
+    <p>
+      © <span id="currentYear"></span>
+      Chilimba Smart Save. All rights reserved.
+    </p>
+
+  </footer>
+
+  <script type="module">
+    import { auth, db } from "../../js/firebase.js";
+
+    import {
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+    import {
+      collection,
+      doc,
+      getDoc,
+      writeBatch,
+      serverTimestamp,
+      Timestamp
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+    const form = document.getElementById("createGroupForm");
+    const button = document.getElementById("createButton");
+    const message = document.getElementById("message");
+    const agreeRules = document.getElementById("agreeRules");
+
+    const groupName = document.getElementById("groupName");
+    const description = document.getElementById("description");
+    const frequency = document.getElementById("frequency");
+    const minimumContribution =
+      document.getElementById("minimumContribution");
+    const provider = document.getElementById("provider");
+    const accountName = document.getElementById("accountName");
+    const accountPhone = document.getElementById("accountPhone");
+
+    document.getElementById("currentYear").textContent =
+      new Date().getFullYear();
+
+    let currentUser = null;
+    let currentProfile = null;
+    let ready = false;
+    let submitting = false;
+
+    function showMessage(text, isError = false) {
+      message.replaceChildren();
+
+      const paragraph = document.createElement("p");
+      paragraph.textContent = text;
+
+      message.appendChild(paragraph);
+      message.style.color = isError ? "#a32121" : "#123b2a";
+      message.style.background = isError ? "#fff0f0" : "#edf7f0";
+      message.style.padding = "12px";
+      message.style.borderRadius = "8px";
+      message.style.margin = "15px 0";
+    }
+
+    function generateInviteCode() {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let code = "";
+
+      for (let i = 0; i < 8; i++) {
+        code += chars[Math.floor(Math.random() * chars.length)];
+      }
+
+      return code;
+    }
+
+    /*
+      The button is enabled only when:
+      1. Firebase confirms an authorised account.
+      2. All required fields are valid.
+      3. The rules checkbox is checked.
+      4. A submission is not already in progress.
+    */
+    function updateButtonState() {
+      const fieldsValid = form.checkValidity();
+      const canCreate =
+        ready &&
+        fieldsValid &&
+        agreeRules.checked &&
+        !submitting;
+
+      button.disabled = !canCreate;
+
+      if (submitting) {
+        button.textContent = "Creating group...";
+      } else {
+        button.textContent = "Create Group";
+      }
+    }
+
+    form.addEventListener("input", updateButtonState);
+    form.addEventListener("change", updateButtonState);
+
+    onAuthStateChanged(auth, async (user) => {
+      ready = false;
+      currentUser = null;
+      currentProfile = null;
+      updateButtonState();
+
+      if (!user) {
+        window.location.replace("../login.html");
+        return;
+      }
+
+      try {
+        const profileRef = doc(db, "users", user.uid);
+        const profileSnap = await getDoc(profileRef);
+
+        if (!profileSnap.exists()) {
+          showMessage(
+            "Your user profile was not found. Please contact the administrator.",
+            true
+          );
+          return;
+        }
+
+        const profile = profileSnap.data();
+
+        if (
+          profile.role !== "member" ||
+          profile.active !== true
+        ) {
+          showMessage(
+            "Your account is not authorised to create groups.",
+            true
+          );
+          return;
+        }
+
+        currentUser = user;
+        currentProfile = profile;
+        ready = true;
+
+        message.replaceChildren();
+        message.style.background = "transparent";
+        message.style.padding = "0";
+        message.style.margin = "0";
+
+        updateButtonState();
+
+      } catch (error) {
+        console.error("Account verification error:", error);
+
+        showMessage(
+          "Unable to verify your account. Check your internet connection and try again.",
+          true
+        );
+      }
+    });
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      if (submitting) return;
+
+      if (!ready || !currentUser || !currentProfile) {
+        showMessage(
+          "Your account has not been verified yet. Please wait or refresh the page.",
+          true
+        );
+        return;
+      }
+
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        updateButtonState();
+        return;
+      }
+
+      if (!agreeRules.checked) {
+        showMessage(
+          "Please agree to the Group Creation Rules before continuing.",
+          true
+        );
+        updateButtonState();
+        return;
+      }
+
+      const name = groupName.value.trim();
+      const groupDescription = description.value.trim();
+      const selectedFrequency = frequency.value;
+      const contributionAmount =
+        Number(minimumContribution.value);
+      const selectedProvider = provider.value;
+      const holderName = accountName.value.trim();
+      const holderPhone = accountPhone.value.trim();
+
+      if (
+        !name ||
+        !selectedFrequency ||
+        !selectedProvider ||
+        !holderName ||
+        !holderPhone ||
+        !Number.isFinite(contributionAmount) ||
+        contributionAmount <= 0
+      ) {
+        showMessage(
+          "Please check all required fields and enter a valid contribution amount.",
+          true
+        );
+        return;
+      }
+
+      submitting = true;
+      updateButtonState();
+
+      showMessage("Please wait while your group is created.");
+
+      try {
+        let inviteCode = "";
+        let inviteRef = null;
+        let codeFound = true;
+
+        for (let attempt = 0; attempt < 8; attempt++) {
+          inviteCode = generateInviteCode();
+          inviteRef = doc(db, "groupInvitations", inviteCode);
+
+          const existingCode = await getDoc(inviteRef);
+
+          if (!existingCode.exists()) {
+            codeFound = false;
+            break;
+          }
+        }
+
+        if (codeFound || !inviteRef) {
+          throw new Error(
+            "Could not generate a unique invitation code. Please try again."
+          );
+        }
+
+        const groupRef = doc(collection(db, "groups"));
+
+        const trialStart = new Date();
+        const trialEnd = new Date(
+          trialStart.getTime() + 30 * 24 * 60 * 60 * 1000
+        );
+
+        const batch = writeBatch(db);
+
+        batch.set(groupRef, {
+          name,
+          description: groupDescription,
+          ownerUid: currentUser.uid,
+          ownerName:
+            currentProfile.fullName ||
+            currentUser.displayName ||
+            "",
+          memberUids: [currentUser.uid],
+          status: "active",
+          contributionFrequency: selectedFrequency,
+          minimumContribution: contributionAmount,
+
+          paymentAccount: {
+            provider: selectedProvider,
+            accountName: holderName,
+            accountPhone: holderPhone
+          },
+
+          trialStartedAt: Timestamp.fromDate(trialStart),
+          trialEndsAt: Timestamp.fromDate(trialEnd),
+          subscriptionStatus: "trial",
+          subscriptionPaidUntil: null,
+          subscriptionLastPaymentId: null,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+
+        batch.set(inviteRef, {
+          code: inviteCode,
+          groupId: groupRef.id,
+          groupName: name,
+          createdBy: currentUser.uid,
+          status: "active",
+          createdAt: serverTimestamp()
+        });
+
+        await batch.commit();
+
+        // Display successful group creation
+        message.replaceChildren();
+        message.style.color = "#123b2a";
+        message.style.background = "#edf7f0";
+        message.style.padding = "16px";
+        message.style.borderRadius = "8px";
+        message.style.margin = "15px 0";
+
+        const successTitle = document.createElement("h2");
+        successTitle.textContent = "Group created successfully!";
+        successTitle.style.marginTop = "0";
+
+        const successText = document.createElement("p");
+        successText.textContent =
+          "Your Chilimba group has been created. Your 30-day free trial has started.";
+
+        const codeLabel = document.createElement("p");
+        codeLabel.textContent = "Your group invitation code:";
+
+        const codeDisplay = document.createElement("p");
+        codeDisplay.textContent = inviteCode;
+        codeDisplay.style.fontSize = "24px";
+        codeDisplay.style.fontWeight = "800";
+        codeDisplay.style.letterSpacing = "3px";
+        codeDisplay.style.textAlign = "center";
+        codeDisplay.style.padding = "12px";
+        codeDisplay.style.background = "#ffffff";
+        codeDisplay.style.border = "1px dashed #256b4a";
+        codeDisplay.style.borderRadius = "8px";
+
+        const copyButton = document.createElement("button");
+        copyButton.type = "button";
+        copyButton.className = "copy-code-button";
+        copyButton.textContent = "Copy Invitation Code";
+
+        copyButton.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(inviteCode);
+            copyButton.textContent = "Code Copied!";
+          } catch (error) {
+            console.error("Copy failed:", error);
+
+            codeDisplay.focus?.();
+            showMessage(
+              "Copying failed. Please select and copy this invitation code manually: " +
+                inviteCode,
+              true
+            );
+          }
+        });
+
+        const dashboardLink = document.createElement("a");
+        dashboardLink.href = "dashboard.html";
+        dashboardLink.textContent = "Go to your dashboard";
+        dashboardLink.style.display = "inline-block";
+        dashboardLink.style.marginTop = "16px";
+
+        const dashboardParagraph = document.createElement("p");
+        dashboardParagraph.appendChild(dashboardLink);
+
+        message.append(
+          successTitle,
+          successText,
+          codeLabel,
+          codeDisplay,
+          copyButton,
+          dashboardParagraph
+        );
+
+        // Reset the form after successful creation.
+        form.reset();
+        submitting = false;
+        updateButtonState();
+
+      } catch (error) {
+        console.error("Group creation error:", error);
+
+        showMessage(
+          error.message ||
+            "We could not create your group. Please check your connection and try again.",
+          true
+        );
+
+        submitting = false;
+        updateButtonState();
+      }
+    });
+
+    // Set the correct initial button state.
+    updateButtonState();
+  </script>
+
+</body>
+</html>

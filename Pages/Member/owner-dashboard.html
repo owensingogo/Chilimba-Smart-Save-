@@ -1,0 +1,282 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#123b2a">
+  <meta name="description" content="Chilimba Smart Save Group Owner Dashboard">
+  <title>Group Owner Dashboard | Chilimba Smart Save</title>
+
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="../../css/owner-dashboard.css">
+</head>
+<body class="owner-dashboard-page">
+
+  <header class="owner-header">
+    <a class="owner-brand" href="owner-dashboard.html">
+      <span class="owner-logo">🌱</span>
+      <span>Chilimba Smart Save</span>
+    </a>
+
+    <button id="menu-toggle" class="owner-menu-toggle"
+      type="button" aria-label="Open navigation" aria-expanded="false">
+      ☰
+    </button>
+  </header>
+
+  <div class="owner-layout">
+
+    <aside id="sidebar" class="owner-sidebar">
+      <div class="owner-profile">
+        <div class="owner-avatar" id="owner-avatar">O</div>
+        <h2 id="owner-name">Loading...</h2>
+        <p id="owner-place">Loading location...</p>
+        <span class="owner-role">Group Owner</span>
+      </div>
+
+      <nav class="owner-nav">
+        <a class="owner-nav-link active" href="owner-dashboard.html">
+          🏠 Overview
+        </a>
+        <a class="owner-nav-link" href="../member/groups.html">
+          👥 My Groups
+        </a>
+        <a class="owner-nav-link" href="../member/contributions.html">
+          💰 Contributions
+        </a>
+        <a class="owner-nav-link" href="../member/transactions.html">
+          📋 Transactions
+        </a>
+        <a class="owner-nav-link" href="../member/loans.html">
+          🤝 Loans & Borrowing
+        </a>
+        <a class="owner-nav-link" href="../member/loan-rules.html">
+          📜 Loan Rules & Fees
+        </a>
+        <a class="owner-nav-link" href="../member/polls.html">
+          🗳️ Polls & Voting
+        </a>
+        <a class="owner-nav-link" href="../member/announcements.html">
+          📢 Announcements
+        </a>
+        <a class="owner-nav-link" href="../member/meeting-minutes.html">
+          📝 Meeting Minutes
+        </a>
+        <a class="owner-nav-link" href="../member/group-directory.html">
+          👨‍👩‍👧 Group Directory
+        </a>
+        <a class="owner-nav-link" href="../member/discrepancies.html">
+          🧾 Discrepancy Reports
+        </a>
+        <a class="owner-nav-link" href="../member/subscription.html">
+          💳 Group Subscription
+        </a>
+        <a class="owner-nav-link" href="../member/settings.html">
+          ⚙️ Account Settings
+        </a>
+
+        <button id="logout-button" class="owner-nav-link owner-logout"
+          type="button">
+          🚪 Sign Out
+        </button>
+      </nav>
+    </aside>
+
+    <main class="owner-main">
+
+      <section class="owner-welcome">
+        <p class="owner-eyebrow">GROUP MANAGEMENT</p>
+        <h1>Welcome, <span id="welcome-name">Owner</span>!</h1>
+        <p>Manage your Chilimba group, monitor savings and oversee group activities.</p>
+      </section>
+
+      <p id="dashboard-message" class="owner-message"
+        role="status" aria-live="polite" hidden></p>
+
+      <section class="owner-panel">
+        <div class="owner-panel-heading">
+          <div>
+            <h2>Your Chilimba Groups</h2>
+            <p>Select a group to view its records.</p>
+          </div>
+        </div>
+
+        <label for="group-selector">Select group</label>
+        <select id="group-selector" disabled>
+          <option value="">Loading groups...</option>
+        </select>
+
+        <h3 id="selected-group-name" class="selected-group-name">
+          Loading group...
+        </h3>
+
+        <p>
+          Subscription:
+          <strong id="subscription-status">Loading...</strong>
+        </p>
+        <p id="subscription-dates" class="muted-text"></p>
+      </section>
+
+      <section class="owner-summary-grid">
+
+        <article class="owner-summary-card">
+          <span class="summary-icon">💰</span>
+          <p>Group Contributions</p>
+          <h2 id="group-balance">Loading...</h2>
+          <small>Confirmed contributions only</small>
+        </article>
+
+        <article class="owner-summary-card">
+          <span class="summary-icon">👤</span>
+          <p>My Contributions</p>
+          <h2 id="personal-balance">Loading...</h2>
+          <small>Your confirmed contributions in this group</small>
+        </article>
+
+        <article class="owner-summary-card">
+          <span class="summary-icon">👥</span>
+          <p>Group Members</p>
+          <h2 id="member-count">Loading...</h2>
+          <small>Registered group members</small>
+        </article>
+
+        <article class="owner-summary-card">
+          <span class="summary-icon">📋</span>
+          <p>Contribution Records</p>
+          <h2 id="contribution-count">Loading...</h2>
+          <small>Records available for this group</small>
+        </article>
+
+      </section>
+
+      <section class="owner-panel">
+        <div class="owner-panel-heading">
+          <div>
+            <h2>Group Leadership</h2>
+            <p>Current leadership assignments for the selected group.</p>
+          </div>
+        </div>
+
+        <div class="leadership-grid">
+          <article class="leadership-card">
+            <span>👑</span>
+            <h3>Group Owner</h3>
+            <p id="lead-owner">Loading...</p>
+          </article>
+
+          <article class="leadership-card">
+            <span>📝</span>
+            <h3>Secretary</h3>
+            <p id="lead-secretary">Not assigned</p>
+          </article>
+
+          <article class="leadership-card">
+            <span>🧮</span>
+            <h3>Accountant</h3>
+            <p id="lead-accountant">Not assigned</p>
+          </article>
+        </div>
+
+        <p class="muted-text">
+          Leadership assignments are displayed from existing group records.
+          Appointment and election controls will require their own secure workflows.
+        </p>
+      </section>
+
+      <section class="owner-panel">
+        <div class="owner-panel-heading">
+          <div>
+            <h2>Quick Actions</h2>
+            <p>Open a group management feature.</p>
+          </div>
+        </div>
+
+        <div class="owner-actions">
+          <a href="../member/groups.html" class="owner-action">
+            <span>👥</span>
+            <strong>Manage Groups</strong>
+            <small>Review your groups</small>
+          </a>
+
+          <a href="../member/contributions.html" class="owner-action">
+            <span>💰</span>
+            <strong>Contributions</strong>
+            <small>Review contribution records</small>
+          </a>
+
+          <a href="../member/loans.html" class="owner-action">
+            <span>🤝</span>
+            <strong>Loans</strong>
+            <small>Review borrowing activity</small>
+          </a>
+
+          <a href="../member/polls.html" class="owner-action">
+            <span>🗳️</span>
+            <strong>Voting</strong>
+            <small>View group polls</small>
+          </a>
+
+          <a href="../member/announcements.html" class="owner-action">
+            <span>📢</span>
+            <strong>Announcements</strong>
+            <small>Open group messages</small>
+          </a>
+
+          <a href="../member/group-directory.html" class="owner-action">
+            <span>👨‍👩‍👧</span>
+            <strong>Member Directory</strong>
+            <small>View group members</small>
+          </a>
+
+          <a href="../member/discrepancies.html" class="owner-action">
+            <span>🧾</span>
+            <strong>Discrepancies</strong>
+            <small>Review financial reports</small>
+          </a>
+
+          <a href="../member/subscription.html" class="owner-action">
+            <span>💳</span>
+            <strong>Subscription</strong>
+            <small>Review group subscription</small>
+          </a>
+        </div>
+      </section>
+
+      <section class="owner-panel">
+        <div class="owner-panel-heading">
+          <div>
+            <h2>Recent Contributions</h2>
+            <p>Latest contribution records for the selected group.</p>
+          </div>
+        </div>
+
+        <div class="owner-table-wrap">
+          <table class="owner-table">
+            <thead>
+              <tr>
+                <th>Member UID</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody id="recent-contributions">
+              <tr>
+                <td colspan="4">Loading contribution records...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <footer class="owner-footer">
+        Chilimba Smart Save · Learn to save. Save together. Grow together.
+      </footer>
+
+    </main>
+  </div>
+
+  <script type="module" src="../../js/owner-dashboard.js"></script>
+</body>
+</html>
