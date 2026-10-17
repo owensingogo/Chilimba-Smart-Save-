@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#123b2a">
+  <meta name="description" content="Chilimba Smart Save helps Zambian chilimba groups manage contributions, expenses, loans and financial records.">
+
+  <title>Chilimba Smart Save — Save Together. Manage Smarter.</title>
+
+  <link rel="stylesheet" href="css/style.css">
+
+  <style>
+    /* COMPACT WHITE HEADER */
+    .site-header {
+      background: #ffffff;
+      color: #123b2a;
+    }
+
+    .site-header .container {
+      padding-top: 12px;
+    }
+
+    .header-inner {
+      gap: 10px;
+      padding-bottom: 12px;
+    }
+
+    .brand {
+      gap: 10px;
+    }
+
+    .brand-name,
+    .brand-tagline {
+      color: #123b2a;
+    }
+
+    .brand-icon {
+      flex: 0 0 58px;
+      width: 58px;
+      height: 58px;
+      border-radius: 16px;
+      background: #123b2a;
+      color: #ffffff;
+      font-size: 28px;
+    }
+
+    .brand-name {
+      font-size: 20px;
+    }
+
+    .brand-tagline {
+      font-size: 12px;
+    }
+
+    .country-label {
+      font-size: 13px;
+      color: #123b2a;
+    }
+
+    .main-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      background: #ffffff;
+    }
+
+    .main-nav a {
+      color: #123b2a;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .main-nav .nav-login {
+      color: #246b50;
+      font-weight: 700;
+    }
+
+    /* DARK GREEN HERO */
+    .hero {
+      background: #123b2a;
+      color: #ffffff;
+      padding: 30px 0 36px;
+    }
+
+    .hero-content {
+      width: 100%;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .hero-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      max-width: 400px;
+      min-height: 48px;
+      margin-bottom: 24px;
+      padding: 10px 14px;
+      border-radius: 40px;
+      background: #20533d;
+      color: #ffffff;
+      box-sizing: border-box;
+    }
+
+    .hero-badge span {
+      color: #ffffff;
+    }
+
+    .hero-badge p {
+      display: none;
+    }
+
+    .hero-title {
+      color: #ffffff;
+      font-size: clamp(30px, 5vw, 46px);
+      line-height: 1.2;
+      margin-bottom: 20px;
+    }
+
+    .hero-description {
+      color: #e0eae4;
+      font-size: 18px;
+      line-height: 1.6;
+    }
+
+    /* HERO ACTION BUTTONS */
+    .hero-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      width: 100%;
+      margin-top: 28px;
+    }
+
+    .hero-actions .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      min-height: 76px;
+      padding: 16px;
+      border-radius: 18px;
+      box-sizing: border-box;
+      font-size: 18px;
+      font-weight: 700;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    .hero-actions .btn-primary {
+      background: #ffffff;
+      border: 2px solid #ffffff;
+      color: #123b2a;
+    }
+
+    .hero-actions .btn-outline {
+      background: transparent;
+      border: 2px solid #a8c9b8;
+      color: #ffffff;
+    }
+
+    .hero-actions .btn-primary span:last-child {
+      font-size: 24px;
+    }
+
+    .hero-trial {
+      margin-top: 24px;
+      color: #d7e5dc;
+      text-align: center;
+    }
+
+    /* DASHBOARD PREVIEW */
+    .preview-section {
+      background: #123b2a;
+      padding: 0 0 32px;
+    }
+
+    .dashboard-preview {
+      background: #f7faf8;
+      border-radius: 24px;
+      padding: 20px;
+    }
+
+    .preview-label {
+      color: #687d71;
+    }
+
+    .preview-heading h2 {
+      color: #123b2a;
+    }
+
+    /* TWO-COLUMN DASHBOARD */
+    .preview-stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .preview-stat {
+      min-width: 0;
+      background: #e5f1e9;
+      border-radius: 16px;
+      padding: 14px;
+      box-sizing: border-box;
+    }
+
+    .pending-stat {
+      background: #e9edfc;
+    }
+
+    .preview-stat span,
+    .preview-stat strong {
+      overflow-wrap: anywhere;
+    }
+
+    /* TWO-COLUMN FEATURE BOXES */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .feature-card {
+      min-width: 0;
+      padding: 16px;
+      box-sizing: border-box;
+      overflow-wrap: anywhere;
+    }
+
+    /* TWO-COLUMN PRICING BOXES */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .pricing-card {
+      min-width: 0;
+      padding: 16px;
+      box-sizing: border-box;
+      overflow-wrap: anywhere;
+    }
+
+    .pricing-card h3 {
+      font-size: 24px;
+    }
+
+    .pricing-card h3 span {
+      font-size: 13px;
+    }
+
+    /* SMALL PHONE ADJUSTMENTS */
+    @media (max-width: 380px) {
+      .brand-icon {
+        flex-basis: 48px;
+        width: 48px;
+        height: 48px;
+        font-size: 24px;
+      }
+
+      .brand-name {
+        font-size: 17px;
+      }
+
+      .brand-tagline {
+        font-size: 10px;
+      }
+
+      .main-nav {
+        gap: 6px;
+      }
+
+      .main-nav a {
+        font-size: 11px;
+      }
+
+      .features-grid,
+      .preview-stats,
+      .pricing-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .feature-card,
+      .preview-stat,
+      .pricing-card {
+        padding: 12px;
+      }
+
+      .hero-actions .btn {
+        min-height: 68px;
+        padding: 12px;
+        font-size: 16px;
+      }
+
+      .pricing-card h3 {
+        font-size: 21px;
+      }
+    }
+  </style>
+</head>
+
+<body class="home-page">
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="container">
+
+      <div class="header-inner">
+        <a href="index.html" class="brand">
+          <span class="brand-icon" aria-hidden="true">▣</span>
+
+          <span class="brand-text">
+            <span class="brand-name">Chilimba Smart Save</span>
+            <span class="brand-tagline">Save Together. Manage Smarter.</span>
+          </span>
+        </a>
+
+        <span class="country-label">🇿🇲</span>
+      </div>
+
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="#home">Home</a>
+        <a href="#features">Features</a>
+        <a href="#pricing">Pricing</a>
+        <a href="pages/login.html" class="nav-login">Login</a>
+      </nav>
+
+    </div>
+  </header>
+
+  <main>
+
+    <!-- HERO -->
+    <section class="hero section" id="home">
+      <div class="container">
+        <div class="hero-content">
+
+          <div class="hero-badge">
+            <span aria-hidden="true">🇿🇲</span>
+            <span>MADE IN ZAMBIA</span>
+            <p>A smarter way to manage your chilimba group.</p>
+          </div>
+
+          <h1 class="hero-title">
+            Save Together. Manage Smarter.
+          </h1>
+
+          <p class="hero-description">
+            Bring your chilimba group together in one place.
+            Track contributions, manage expenses, organise meetings
+            and keep financial records transparent.
+          </p>
+
+          <div class="hero-actions">
+            <a href="pages/register.html" class="btn btn-primary">
+              <span>Get Started</span>
+              <span aria-hidden="true">→</span>
+            </a>
+
+            <a href="pages/login.html" class="btn btn-outline">
+              <span>Log In to Your Account</span>
+            </a>
+          </div>
+
+          <p class="hero-trial">
+            Start with a 30-day free trial for your group.
+          </p>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- DASHBOARD PREVIEW -->
+    <section class="section preview-section">
+      <div class="container">
+
+        <div class="dashboard-preview">
+
+          <div class="preview-heading">
+            <div>
+              <p class="preview-label">SHARED GROUP BALANCE</p>
+              <h2>K2,500.00</h2>
+            </div>
+
+            <span class="preview-icon" aria-hidden="true">📊</span>
+          </div>
+
+          <div class="preview-divider"></div>
+
+          <div class="preview-stats">
+
+            <div class="preview-stat">
+              <span>My Contributions</span>
+              <strong>K350.00</strong>
+            </div>
+
+            <div class="preview-stat pending-stat">
+              <span>Pending</span>
+              <strong>K100.00</strong>
+            </div>
+
+          </div>
+
+          <p class="preview-note">
+            Illustrative dashboard preview — not actual account data.
+          </p>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="section features-section" id="features">
+      <div class="container">
+
+        <div class="section-heading">
+          <h2>Your Group. One Clear View.</h2>
+          <p>
+            Tools that help your members stay organised and accountable.
+          </p>
+        </div>
+
+        <div class="features-grid">
+
+          <article class="feature-card">
+            <span class="feature-icon" aria-hidden="true">♧</span>
+            <h3>Group Members</h3>
+            <p>Manage membership and leadership.</p>
+          </article>
+
+          <article class="feature-card">
+            <span class="feature-icon" aria-hidden="true">▣</span>
+            <h3>Contributions</h3>
+            <p>Record and verify payments.</p>
+          </article>
+
+          <article class="feature-card">
+            <span class="feature-icon" aria-hidden="true">▤</span>
+            <h3>Expenses</h3>
+            <p>Keep spending records clear.</p>
+          </article>
+
+          <article class="feature-card">
+            <span class="feature-icon" aria-hidden="true">▥</span>
+            <h3>Reports</h3>
+            <p>Review balances and daily reports.</p>
+          </article>
+
+          <article class="feature-card">
+            <span class="feature-icon" aria-hidden="true">♧</span>
+            <h3>Payouts &amp; Loans</h3>
+            <p>Track money paid out and repayments.</p>
+          </article>
+
+          <article class="feature-card">
+            <span class="feature-icon" aria-hidden="true">♢</span>
+            <h3>Account Security</h3>
+            <p>Keep group records access-controlled.</p>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="section how-section" id="how-it-works">
+      <div class="container">
+
+        <div class="section-heading">
+          <h2>How It Works</h2>
+          <p>Get your chilimba group organised in a few simple steps.</p>
+        </div>
+
+        <div class="steps-list">
+
+          <article class="step-item">
+            <span class="step-number">1</span>
+            <div>
+              <h3>Create your account</h3>
+              <p>Register and set up your chilimba group.</p>
+            </div>
+          </article>
+
+          <article class="step-item">
+            <span class="step-number">2</span>
+            <div>
+              <h3>Invite your members</h3>
+              <p>Organise your members and assign group leaders.</p>
+            </div>
+          </article>
+
+          <article class="step-item">
+            <span class="step-number">3</span>
+            <div>
+              <h3>Record group activities</h3>
+              <p>Track contributions, expenses, payouts and loans.</p>
+            </div>
+          </article>
+
+          <article class="step-item">
+            <span class="step-number">4</span>
+            <div>
+              <h3>Stay organised and accountable</h3>
+              <p>Review financial reports and keep clear group records.</p>
+            </div>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- PRICING -->
+    <section class="section pricing-section" id="pricing">
+      <div class="container">
+
+        <div class="section-heading">
+          <h2>Simple Monthly Pricing</h2>
+          <p>
+            Every new group receives 30 days free. After the trial,
+            the monthly subscription depends on the number of active members.
+          </p>
+        </div>
+
+        <div class="pricing-grid">
+
+          <article class="pricing-card">
+            <p class="pricing-members">5 active members</p>
+            <h3>K20<span>/month</span></h3>
+          </article>
+
+          <article class="pricing-card">
+            <p class="pricing-members">10 active members</p>
+            <h3>K30<span>/month</span></h3>
+          </article>
+
+          <article class="pricing-card">
+            <p class="pricing-members">15 active members</p>
+            <h3>K45<span>/month</span></h3>
+          </article>
+
+          <article class="pricing-card">
+            <p class="pricing-members">20 active members</p>
+            <h3>K60<span>/month</span></h3>
+          </article>
+
+        </div>
+
+        <p class="pricing-note">
+          The full pricing table includes all member tiers.
+        </p>
+
+      </div>
+    </section>
+
+    <!-- FINAL CALL TO ACTION -->
+    <section class="section cta-section">
+      <div class="container">
+
+        <div class="cta-card">
+          <h2>Ready to organise your chilimba?</h2>
+          <p>
+            Create your group and start managing your records smarter.
+          </p>
+
+          <a href="pages/register.html" class="btn btn-light">
+            Create Your Account →
+          </a>
+        </div>
+
+        <p class="financial-disclaimer">
+          Chilimba Smart Save records group finances but does not hold
+          or transfer group money.
+        </p>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer" id="footer">
+    <div class="container">
+
+      <h2>Chilimba Smart Save</h2>
+
+      <p class="footer-pride">Proudly Zambian 🇿🇲</p>
+
+      <nav class="footer-links" aria-label="Footer navigation">
+        <a href="pages/support.html">Help &amp; Support</a>
+        <span aria-hidden="true">·</span>
+        <a href="pages/privacy.html">Privacy Policy</a>
+        <span aria-hidden="true">·</span>
+        <a href="pages/terms.html">Terms</a>
+        <span aria-hidden="true">·</span>
+        <a href="pages/subscription-rules.html">Subscription Rules</a>
+      </nav>
+
+      <p class="footer-copyright">
+        © <span id="current-year">2026</span> Chilimba Smart Save.
+        All rights reserved.
+      </p>
+
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById("current-year").textContent =
+      new Date().getFullYear();
+  </script>
+
+</body>
+</html>
