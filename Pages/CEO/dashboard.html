@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123b2a">
+  <title>CEO Dashboard | Chilimba Smart Save</title>
+  <link rel="stylesheet" href="../../css/style.css">
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #f4f7f5;
+      color: #25372c;
+      font-family: Arial, sans-serif;
+    }
+
+    .ceo-header {
+      padding: 20px;
+      background: #123b2a;
+      color: white;
+    }
+
+    .ceo-header h1 { margin: 0 0 8px; }
+    .ceo-header p { margin: 5px 0; }
+
+    .ceo-content {
+      max-width: 1000px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .ceo-card {
+      padding: 20px;
+      margin-bottom: 18px;
+      background: white;
+      border: 1px solid #e2eae4;
+      border-radius: 12px;
+      box-shadow: 0 3px 12px rgba(18, 59, 42, .05);
+    }
+
+    .ceo-card h2 { color: #123b2a; }
+
+    .ceo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+    }
+
+    .ceo-stat {
+      padding: 18px;
+      background: #edf4ef;
+      border-radius: 10px;
+    }
+
+    .ceo-stat p { margin: 0 0 10px; }
+    .ceo-stat strong { color: #123b2a; font-size: 20px; }
+
+    .ceo-button {
+      padding: 12px 16px;
+      border: 0;
+      border-radius: 8px;
+      background: #123b2a;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .ceo-button:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    #ceo-message {
+      overflow-wrap: anywhere;
+      line-height: 1.6;
+    }
+
+    .ceo-link {
+      display: inline-block;
+      margin-right: 12px;
+      color: #123b2a;
+      font-weight: 600;
+    }
+
+    @media (max-width: 480px) {
+      .ceo-content { padding: 12px; }
+      .ceo-card { padding: 15px; }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="ceo-header">
+    <h1>Chilimba Smart Save</h1>
+    <p>CEO Administration Dashboard</p>
+    <p>Learn to save. Save together. Grow together.</p>
+  </header>
+
+  <main class="ceo-content">
+    <section class="ceo-card">
+      <h2>CEO Account</h2>
+      <p><strong>Name:</strong> Owen Singogo</p>
+      <p><strong>Phone:</strong> 0978362800</p>
+      <p><strong>Email:</strong> owensingogo998@gmail.com</p>
+      <p><strong>Role:</strong> CEO</p>
+      <p><strong>Status:</strong> <span id="ceo-status">Checking...</span></p>
+      <p id="ceo-message" role="status" aria-live="polite">
+        Checking your Firebase sign-in...
+      </p>
+      <button class="ceo-button" id="logout-button" type="button">
+        Log Out
+      </button>
+    </section>
+
+    <h2>Platform Overview</h2>
+
+    <section class="ceo-grid">
+      <article class="ceo-stat">
+        <p>Registered Members</p>
+        <strong>Not connected</strong>
+      </article>
+
+      <article class="ceo-stat">
+        <p>Chilimba Groups</p>
+        <strong>Not connected</strong>
+      </article>
+
+      <article class="ceo-stat">
+        <p>Pending Payments</p>
+        <strong>Not connected</strong>
+      </article>
+
+      <article class="ceo-stat">
+        <p>Contributions</p>
+        <strong>Not connected</strong>
+      </article>
+    </section>
+
+    <section class="ceo-card">
+      <h2>Management</h2>
+      <p>Member and group management pages will be connected as their systems are implemented.</p>
+      <a class="ceo-link" href="../member/dashboard.html">Member Dashboard</a>
+    </section>
+  </main>
+
+  <script type="module">
+    import { auth, db } from "../../js/firebase.js";
+    import {
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import {
+      doc,
+      getDoc
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+    const CEO_EMAIL = "owensingogo998@gmail.com";
+    const statusElement = document.getElementById("ceo-status");
+    const messageElement = document.getElementById("ceo-message");
+    const logoutButton = document.getElementById("logout-button");
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.replace("../login.html");
+        return;
+      }
+
+      if ((user.email || "").toLowerCase() !== CEO_EMAIL) {
+        messageElement.textContent = "Access denied. This account is not authorised as the CEO.";
+        statusElement.textContent = "Unauthorised";
+
+        await signOut(auth);
+        window.location.replace("../login.html");
+        return;
+      }
+
+      try {
+        const profileRef = doc(db, "users", user.uid);
+        const profileSnapshot = await getDoc(profileRef);
+
+        if (!profileSnapshot.exists()) {
+          statusElement.textContent = "Profile missing";
+          messageElement.textContent =
+            "The CEO email is recognised, but the matching Firestore profile is missing. The CEO account still needs secure provisioning.";
+          return;
+        }
+
+        const profile = profileSnapshot.data();
+
+        if (profile.role !== "ceo" || profile.active !== true) {
+          statusElement.textContent = "Not authorised";
+          messageElement.textContent =
+            "The account profile does not have the required active CEO permissions.";
+          await signOut(auth);
+          window.location.replace("../login.html");
+          return;
+        }
+
+        statusElement.textContent = "Active";
+        messageElement.textContent =
+          "CEO account verified successfully. Welcome, Owen Singogo.";
+      } catch (error) {
+        console.error(error);
+        statusElement.textContent = "Verification failed";
+        messageElement.textContent =
+          "Unable to verify CEO permissions. Check your internet connection and Firestore security rules.";
+      }
+    });
+
+    logoutButton.addEventListener("click", async () => {
+      logoutButton.disabled = true;
+
+      try {
+        await signOut(auth);
+        window.location.replace("../login.html");
+      } catch (error) {
+        messageElement.textContent = "Logout failed. Please try again.";
+        logoutButton.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

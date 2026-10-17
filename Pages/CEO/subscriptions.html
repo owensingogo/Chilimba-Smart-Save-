@@ -1,0 +1,713 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#123b2a">
+  <title>Subscription Management | Chilimba Smart Save</title>
+
+  <style>
+    :root {
+      --green: #123b2a;
+      --background: #f7faf8;
+      --white: #ffffff;
+      --text: #17231d;
+      --muted: #68756d;
+      --border: #dce5df;
+      --red: #a52828;
+      --orange: #875a00;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--background);
+      color: var(--text);
+    }
+
+    header {
+      background: var(--green);
+      color: white;
+      padding: 22px 16px;
+    }
+
+    .header-inner,
+    main {
+      max-width: 950px;
+      margin: auto;
+    }
+
+    header h1 {
+      margin: 0 0 7px;
+      font-size: 23px;
+    }
+
+    header p {
+      margin: 0;
+      font-size: 14px;
+    }
+
+    main {
+      padding: 20px 14px 40px;
+    }
+
+    .intro,
+    .request-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    h2 {
+      color: var(--green);
+      margin-top: 0;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .request-card h3 {
+      margin: 8px 0;
+      overflow-wrap: anywhere;
+    }
+
+    .status {
+      display: inline-block;
+      background: #fff2d5;
+      color: var(--orange);
+      border-radius: 20px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .details {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 16px 0;
+    }
+
+    .detail {
+      background: #f7faf8;
+      border-radius: 8px;
+      padding: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .detail small {
+      display: block;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .detail strong {
+      font-size: 15px;
+    }
+
+    .amount {
+      color: var(--green);
+      font-size: 24px !important;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: bold;
+      margin: 13px 0 7px;
+    }
+
+    input,
+    textarea {
+      display: block;
+      width: 100%;
+      border: 1px solid #cbd7cf;
+      border-radius: 8px;
+      padding: 12px;
+      font: inherit;
+      background: white;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 75px;
+    }
+
+    button,
+    .link-button {
+      display: inline-block;
+      width: 100%;
+      padding: 12px 14px;
+      border: 0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .approve {
+      background: var(--green);
+      color: white;
+    }
+
+    .reject {
+      background: #fcebea;
+      color: var(--red);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .message {
+      display: none;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    .message.success {
+      display: block;
+      background: #e6f5e9;
+      color: #155d2b;
+    }
+
+    .message.error {
+      display: block;
+      background: #fcebea;
+      color: #8e2020;
+    }
+
+    .message.info {
+      display: block;
+      background: #eef3f0;
+      color: var(--green);
+    }
+
+    .empty {
+      text-align: center;
+      padding: 25px 12px;
+      color: var(--muted);
+    }
+
+    .back-link {
+      display: inline-block;
+      color: white;
+      background: #315b46;
+      text-decoration: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+
+    @media (max-width: 480px) {
+      .details {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>Chilimba Smart Save</h1>
+      <p>CEO Subscription Management</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="intro">
+      <h2>Subscription Requests</h2>
+      <p class="muted">
+        Review payment requests from group owners. Confirm the actual
+        mobile-money payment before approving. Approval activates the
+        subscription for that group only.
+      </p>
+      <p class="muted">
+        Never approve a request based only on the information entered
+        by the owner. Verify the transaction independently first.
+      </p>
+      <a class="back-link" href="../../index.html">Home</a>
+    </section>
+
+    <div id="message" class="message"></div>
+    <div id="requests" class="empty">Checking CEO access...</div>
+  </main>
+
+  <script type="module">
+    import { auth, db } from "../../js/firebase.js";
+
+    import {
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+    import {
+      collection,
+      query,
+      where,
+      getDocs,
+      getDoc,
+      doc,
+      runTransaction,
+      Timestamp
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+    const messageBox = document.getElementById("message");
+    const requestsContainer = document.getElementById("requests");
+
+    let currentCEO = null;
+    let busy = false;
+
+    function escapeHTML(value) {
+      return String(value ?? "").replace(/[&<>"']/g, character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      })[character]);
+    }
+
+    function showMessage(message, type = "info") {
+      messageBox.className = "message " + type;
+      messageBox.textContent = message;
+      messageBox.style.display = "block";
+    }
+
+    function hideMessage() {
+      messageBox.className = "message";
+      messageBox.textContent = "";
+      messageBox.style.display = "none";
+    }
+
+    function monthlyFee(count) {
+      if (count <= 5) return 20;
+      if (count <= 10) return 30;
+      return 30 + 15 * Math.ceil((count - 10) / 5);
+    }
+
+    function asDate(value) {
+      if (!value) return null;
+      if (typeof value.toDate === "function") return value.toDate();
+      if (value instanceof Date) return value;
+      return null;
+    }
+
+    function formatDate(value) {
+      const date = asDate(value);
+      if (!date) return "Not recorded";
+
+      return date.toLocaleString("en-ZM", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    async function verifyCEO(user) {
+      const profileSnapshot = await getDoc(
+        doc(db, "users", user.uid)
+      );
+
+      if (!profileSnapshot.exists()) {
+        throw new Error("CEO profile not found.");
+      }
+
+      const profile = profileSnapshot.data();
+      const role = String(profile.role || "").toLowerCase();
+
+      if (profile.active !== true || role !== "ceo") {
+        throw new Error(
+          "Access denied. This page is only for the active CEO account."
+        );
+      }
+
+      currentCEO = user;
+    }
+
+    async function loadRequests() {
+      hideMessage();
+      requestsContainer.className = "empty";
+      requestsContainer.textContent = "Loading payment requests...";
+
+      try {
+        const pendingQuery = query(
+          collection(db, "subscriptionPayments"),
+          where("status", "==", "pending")
+        );
+
+        const snapshot = await getDocs(pendingQuery);
+        const requests = [];
+
+        for (const paymentDoc of snapshot.docs) {
+          const payment = paymentDoc.data();
+
+          let groupName = payment.groupName || "Unknown group";
+          let actualMemberCount = null;
+          let actualFee = null;
+          let groupExists = false;
+
+          if (payment.groupId) {
+            const groupSnapshot = await getDoc(
+              doc(db, "groups", payment.groupId)
+            );
+
+            if (groupSnapshot.exists()) {
+              groupExists = true;
+              const group = groupSnapshot.data();
+              groupName = group.name || groupName;
+
+              actualMemberCount = Array.isArray(group.memberUids)
+                ? group.memberUids.length
+                : 1;
+
+              actualFee = monthlyFee(actualMemberCount);
+            }
+          }
+
+          requests.push({
+            id: paymentDoc.id,
+            ...payment,
+            displayGroupName: groupName,
+            actualMemberCount,
+            actualFee,
+            groupExists
+          });
+        }
+
+        renderRequests(requests);
+
+      } catch (error) {
+        console.error("Could not load requests:", error);
+
+        requestsContainer.className = "empty";
+        requestsContainer.textContent =
+          "Could not load subscription requests.";
+
+        showMessage(
+          error.message ||
+          "Check your Firestore rules and internet connection.",
+          "error"
+        );
+      }
+    }
+
+    function renderRequests(requests) {
+      if (requests.length === 0) {
+        requestsContainer.className = "empty";
+        requestsContainer.innerHTML =
+          "<h3>No pending requests</h3><p>New requests will appear here.</p>";
+        return;
+      }
+
+      requestsContainer.className = "";
+
+      requestsContainer.innerHTML = requests.map(item => {
+        const countMatches =
+          item.actualMemberCount !== null &&
+          item.actualMemberCount === Number(item.activeMemberCount);
+
+        const feeMatches =
+          item.actualFee !== null &&
+          item.actualFee === Number(item.amountZmw);
+
+        const canApprove =
+          item.groupExists &&
+          countMatches &&
+          feeMatches &&
+          item.ownerUid &&
+          item.groupId;
+
+        let validationMessage = "";
+
+        if (!item.groupExists) {
+          validationMessage =
+            "The group no longer exists. Approval is disabled.";
+        } else if (!countMatches || !feeMatches) {
+          validationMessage =
+            "The group's current member count or fee differs from this request. Reject this request and ask the owner to submit a new one.";
+        }
+
+        return `
+          <section class="request-card">
+            <span class="status">Pending review</span>
+
+            <h3>${escapeHTML(item.displayGroupName)}</h3>
+
+            <div class="details">
+              <div class="detail">
+                <small>Requested amount</small>
+                <strong class="amount">
+                  K${escapeHTML(item.amountZmw)}
+                </strong>
+              </div>
+
+              <div class="detail">
+                <small>Payment method</small>
+                <strong>${escapeHTML(item.paymentMethod || "Not provided")}</strong>
+              </div>
+
+              <div class="detail">
+                <small>Member count at request</small>
+                <strong>${escapeHTML(item.activeMemberCount)}</strong>
+              </div>
+
+              <div class="detail">
+                <small>Current member count</small>
+                <strong>${item.actualMemberCount ?? "Group unavailable"}</strong>
+              </div>
+
+              <div class="detail">
+                <small>Current monthly fee</small>
+                <strong>
+                  ${item.actualFee === null ? "Unavailable" : "K" + item.actualFee}
+                </strong>
+              </div>
+
+              <div class="detail">
+                <small>Submitted</small>
+                <strong>${escapeHTML(formatDate(item.createdAt))}</strong>
+              </div>
+            </div>
+
+            <p class="muted">
+              Owner UID: ${escapeHTML(item.ownerUid || "Not recorded")}
+            </p>
+
+            <p class="muted">
+              Payment reference:
+              ${escapeHTML(item.paymentReference || "Not provided")}
+            </p>
+
+            ${
+              validationMessage
+                ? `<div class="message error" style="display:block">
+                    ${escapeHTML(validationMessage)}
+                  </div>`
+                : ""
+            }
+
+            <form class="review-form" data-payment-id="${escapeHTML(item.id)}">
+              <label for="note-${escapeHTML(item.id)}">
+                Review note (optional)
+              </label>
+
+              <textarea
+                id="note-${escapeHTML(item.id)}"
+                name="reviewNote"
+                maxlength="500"
+                placeholder="Record verification details or reason for rejection"></textarea>
+
+              <button
+                type="button"
+                class="approve"
+                data-action="approve"
+                ${canApprove ? "" : "disabled"}>
+                Confirm Payment and Activate
+              </button>
+
+              <button
+                type="button"
+                class="reject"
+                data-action="reject">
+                Reject Request
+              </button>
+            </form>
+          </section>
+        `;
+      }).join("");
+
+      document.querySelectorAll(".review-form").forEach(form => {
+        form.querySelectorAll("button[data-action]").forEach(button => {
+          button.addEventListener("click", async () => {
+            const action = button.dataset.action;
+            const note = form.elements.reviewNote.value.trim();
+            const paymentId = form.dataset.paymentId;
+
+            if (action === "approve") {
+              const confirmed = window.confirm(
+                "Have you independently verified that this payment was received? Only continue if the payment is confirmed."
+              );
+
+              if (!confirmed) return;
+            } else {
+              const confirmed = window.confirm(
+                "Reject this subscription payment request?"
+              );
+
+              if (!confirmed) return;
+            }
+
+            await reviewRequest(paymentId, action, note, button);
+          });
+        });
+      });
+    }
+
+    async function reviewRequest(paymentId, action, reviewNote, button) {
+      if (!currentCEO || busy) return;
+
+      busy = true;
+      button.disabled = true;
+      button.textContent = "Processing...";
+
+      try {
+        await runTransaction(db, async transaction => {
+          const paymentRef = doc(db, "subscriptionPayments", paymentId);
+          const paymentSnapshot = await transaction.get(paymentRef);
+
+          if (!paymentSnapshot.exists()) {
+            throw new Error("This payment request no longer exists.");
+          }
+
+          const payment = paymentSnapshot.data();
+
+          if (payment.status !== "pending") {
+            throw new Error("This request has already been reviewed.");
+          }
+
+          const groupRef = doc(db, "groups", payment.groupId);
+          const groupSnapshot = await transaction.get(groupRef);
+
+          if (action === "approve") {
+            if (!groupSnapshot.exists()) {
+              throw new Error("The group no longer exists.");
+            }
+
+            const group = groupSnapshot.data();
+
+            if (group.ownerUid !== payment.ownerUid) {
+              throw new Error("The request owner does not match the group owner.");
+            }
+
+            const count = Array.isArray(group.memberUids)
+              ? group.memberUids.length
+              : 1;
+
+            const fee = monthlyFee(count);
+
+            if (
+              count !== Number(payment.activeMemberCount) ||
+              fee !== Number(payment.amountZmw)
+            ) {
+              throw new Error(
+                "The member count or fee changed. Reject this request and ask the owner to submit a new one."
+              );
+            }
+
+            // Extend from the later of now, trial expiry, or existing
+            // paid expiry, so early renewals do not lose remaining time.
+            const now = Date.now();
+            const trialEnd = asDate(group.trialEndsAt);
+            const paidUntil = asDate(group.subscriptionPaidUntil);
+
+            const baseTime = Math.max(
+              now,
+              trialEnd ? trialEnd.getTime() : 0,
+              paidUntil ? paidUntil.getTime() : 0
+            );
+
+            const newPaidUntil = Timestamp.fromMillis(
+              baseTime + 30 * 24 * 60 * 60 * 1000
+            );
+
+            transaction.update(groupRef, {
+              subscriptionStatus: "active",
+              subscriptionPaidUntil: newPaidUntil,
+              subscriptionLastPaymentId: paymentId
+            });
+
+            transaction.update(paymentRef, {
+              status: "confirmed",
+              reviewedBy: currentCEO.uid,
+              reviewedAt: Timestamp.now(),
+              reviewNote
+            });
+
+          } else {
+            transaction.update(paymentRef, {
+              status: "rejected",
+              reviewedBy: currentCEO.uid,
+              reviewedAt: Timestamp.now(),
+              reviewNote
+            });
+          }
+        });
+
+        showMessage(
+          action === "approve"
+            ? "Payment request approved and the group's subscription has been activated for 30 days."
+            : "Payment request rejected.",
+          action === "approve" ? "success" : "info"
+        );
+
+        await loadRequests();
+
+      } catch (error) {
+        console.error("Review error:", error);
+
+        showMessage(
+          error.message ||
+          "The request could not be processed. Check the Firestore rules.",
+          "error"
+        );
+
+      } finally {
+        busy = false;
+        if (button.isConnected) {
+          button.disabled = false;
+          button.textContent =
+            action === "approve"
+              ? "Confirm Payment and Activate"
+              : "Reject Request";
+        }
+      }
+    }
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) {
+        window.location.href = "../../pages/login.html";
+        return;
+      }
+
+      try {
+        await verifyCEO(user);
+        await loadRequests();
+
+      } catch (error) {
+        console.error("CEO access check failed:", error);
+
+        requestsContainer.className = "empty";
+        requestsContainer.textContent = "Access denied.";
+
+        showMessage(
+          error.message ||
+          "Your account is not authorised to manage subscriptions.",
+          "error"
+        );
+      }
+    });
+  </script>
+</body>
+</html>
